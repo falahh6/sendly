@@ -9,12 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@radix-ui/react-slot": "^1.1.0",
+    "ably": "^2.5.0",
     "ai": "^3.4.20",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^11.11.4",
+    "googleapis": "^144.0.0",
     "lucide-react": "^0.461.0",
     "next": "14.2.14",
+    "next-auth": "^4.24.10",
     "next-themes": "^0.4.3",
     "openai": "^4.68.4",
     "react": "^18",
@@ -23,6 +27,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@types/ably": "^1.0.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
