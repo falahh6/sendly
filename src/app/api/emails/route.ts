@@ -5,6 +5,7 @@ import { parseEmail } from "@/lib/utils";
 export async function GET(req: NextRequest) {
   try {
     const accessToken = req.headers.get("Authorization")?.split(" ")[1];
+
     if (!accessToken) {
       return NextResponse.json({
         status: 401,
@@ -19,18 +20,20 @@ export async function GET(req: NextRequest) {
 
     const result = await gmail.users.messages.list({
       userId: "me",
-      labelIds: ["INBOX"],
-      //   q: "is:unread",
-      maxResults: 20,
+      maxResults: 10,
     });
+
+    console.log("RESULTS : ", result);
 
     const messages = result.data.messages || [];
 
     const emailDetailsPromises = messages.map(async (message) => {
+      console.log("MESSAGE : ", message);
       const messageDetails = await gmail.users.messages.get({
         userId: "me",
-        id: message.id || "",
+        id: message.id ?? "",
       });
+      console.log("MESSAGE DETAILS : ", messageDetails);
       return parseEmail(messageDetails.data as Email);
     });
 
@@ -38,7 +41,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       status: 200,
-      body: emailDetails,
+      data: emailDetails,
     });
   } catch (error) {
     return NextResponse.json({

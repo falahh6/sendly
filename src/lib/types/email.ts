@@ -31,4 +31,6 @@ type ParsedEmail = {
   plainTextMessage: string | null;
   htmlMessage: string | null;
   attachments: { filename: string; mimeType: string; data: string | null }[];
+  labelIds: string[];
+  priorityGrade: string;
 };

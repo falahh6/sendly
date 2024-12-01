@@ -1,32 +1,80 @@
-"use client";
+import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { baseUrl } from "@/lib/utils";
+import { getServerSession } from "next-auth";
 
-import { useEffect } from "react";
+const EmailItem = ({ email }: { email: ParsedEmail }) => (
+  <div key={email.threadId} className="p-2 border-b">
+    <p className="font-semibold">{email.from}</p>
+    <p>{email.subject}</p>
+    <div>
+      {/* <div
+          dangerouslySetInnerHTML={{ __html: email.htmlMessage || "" }}
+          style={{ background: "#ebeef4" }} 
+        /> */}
+    </div>
+    <p>{email.date}</p>
+    <div className="flex flex-row gap-2 py-2">
+      {email.labelIds.map((label, idx) => (
+        <Badge
+          variant={"secondary"}
+          className="text-xs font-normal"
+          key={label + idx}
+        >
+          {label}
+        </Badge>
+      ))}
+    </div>
+  </div>
+);
 
-const EmailList = ({ emails }: { emails: ParsedEmail[] }) => {
-  useEffect(() => {
-    console.log("emails : ", emails);
+const getEmails = async (accessToken: string) => {
+  const res = await fetch(`${baseUrl}/api/emails`, {
+    cache: "no-cache",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
   });
 
-  return (
-    <div className="p-10">
-      {/* <Button onClick={call}>CALL</Button> */}
-      <div>
-        {emails &&
-          emails?.map((email) => (
-            <div key={email.threadId} className="p-2 border-b">
-              <p className="font-semibold">{email.from}</p>
-              <p>{email.subject}</p>
-              <div>
-                {/* <div
-                  dangerouslySetInnerHTML={{ __html: email.htmlMessage || "" }}
-                  style={{ background: "#ebeef4" }} 
-                /> */}
-              </div>
-              <p>{email.date}</p>
-            </div>
-          ))}
+  const data = await res.json();
+  return data.data;
+};
+
+const EmailList = async () => {
+  const session = await getServerSession(authOptions);
+
+  let emails: ParsedEmail[] = [];
+  if (session?.accessToken) {
+    emails = await getEmails(session.accessToken);
+  }
+
+  const renderEmails = (priorityGrade: string) => {
+    const filteredEmails = emails?.filter(
+      (e) => e.priorityGrade === priorityGrade
+    );
+    return filteredEmails?.length > 0 ? (
+      filteredEmails.map((email) => (
+        <EmailItem key={email.threadId} email={email} />
+      ))
+    ) : (
+      <div className="p-2">
+        <p className="font-semibold">No emails</p>
       </div>
-    </div>
+    );
+  };
+
+  return (
+    <Tabs defaultValue="a" className="w-[800px]">
+      <TabsList>
+        <TabsTrigger value="a">Important</TabsTrigger>
+        <TabsTrigger value="b">Work updates</TabsTrigger>
+        <TabsTrigger value="c">Promotional emails</TabsTrigger>
+      </TabsList>
+      <TabsContent value="a">{renderEmails("A")}</TabsContent>
+      <TabsContent value="b">{renderEmails("B")}</TabsContent>
+      <TabsContent value="c">{renderEmails("C")}</TabsContent>
+    </Tabs>
   );
 };
 

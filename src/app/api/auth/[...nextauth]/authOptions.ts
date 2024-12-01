@@ -3,27 +3,6 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
-async function refreshAccessToken(refreshToken: string) {
-  const response = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: process.env.GOOGLE_CLIENT_ID || "",
-      client_secret: process.env.GOOGLE_CLIENT_SECRET || "",
-      refresh_token: refreshToken,
-      grant_type: "refresh_token",
-    }),
-  });
-
-  const refreshedTokens = await response.json();
-
-  if (!response.ok) {
-    throw refreshedTokens;
-  }
-
-  return refreshedTokens.access_token;
-}
-
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -39,20 +18,26 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, account }: any) {
+      console.log("JWT CALLBACK : ", token, account);
       if (account) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
-        token.accessTokenExpires = Date.now() + account.expires_at * 1000;
+        // token.accessTokenExpires = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days
       }
 
-      if (Date.now() < token.accessTokenExpires) {
-        return token;
-      }
+      return token;
 
-      return await refreshAccessToken(token);
+      //   if (Date.now() < token.accessTokenExpires) {
+      //     return token;
+      //   }
+
+      //   return await refreshAccessToken(token);
     },
     async session({ session, token }: any) {
       session.accessToken = token.accessToken;
+
+      console.log("SESSION CALLBACK : ", session, token);
+
       return session;
     },
   },

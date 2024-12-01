@@ -22,8 +22,8 @@ const SocialLink = ({
 export default async function Home() {
   const session = await getServerSession(authOptions);
   return (
-    <main className="bg-white text-neutral-500">
-      <div className="bg-neutral-100 p-10 h-[50vh] flex flex-col justify-end">
+    <main className="bg-white dark:bg-neutral-700 text-neutral-500">
+      <div className="bg-neutral-100 dark:bg-neutral-800 p-10 h-[50vh] flex flex-col justify-end">
         <h1 className="font-semibold">SENDLY</h1>
         <p>Sendly is a new way to send mails.</p>
       </div>
