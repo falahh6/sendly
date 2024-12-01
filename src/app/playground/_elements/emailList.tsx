@@ -30,15 +30,20 @@ const EmailItem = ({ email }: { email: ParsedEmail }) => (
 );
 
 const getEmails = async (accessToken: string) => {
-  const res = await fetch(`${baseUrl}/api/emails`, {
-    cache: "no-cache",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+  try {
+    const res = await fetch(`${baseUrl}/api/emails`, {
+      cache: "no-cache",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
 
-  const data = await res.json();
-  return data.data;
+    const data = await res.json();
+    return data.data;
+  } catch (error) {
+    console.error("Error fetching emails", error);
+    return [];
+  }
 };
 
 const EmailList = async () => {

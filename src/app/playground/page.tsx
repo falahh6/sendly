@@ -14,7 +14,7 @@ const Page = async () => {
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>{" "}
-          <h4 className="text-lg font-semibold">Your emails (100)</h4>
+          <h4 className="text-lg font-semibold">Your emails (10)</h4>
         </div>
       </div>
 
