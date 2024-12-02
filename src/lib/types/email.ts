@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-type Email = {
+export type Email = {
   id: string;
   threadId: string;
   labelIds: string[];
@@ -17,7 +17,7 @@ type Email = {
   };
 };
 
-type ParsedEmail = {
+export type ParsedEmail = {
   from: string;
   to: string[];
   cc: string[];
@@ -33,4 +33,35 @@ type ParsedEmail = {
   attachments: { filename: string; mimeType: string; data: string | null }[];
   labelIds: string[];
   priorityGrade: string;
+  categorization?: EmailCategorization;
+  nlpEntities?: string[];
+  sentimentScore?: number;
+  privacyCompliant?: boolean;
+  category?: string;
 };
+
+export type EmailCategory =
+  | "Work"
+  | "Personal"
+  | "Promotional"
+  | "Transactional"
+  | "Notification"
+  | "Unknown";
+
+export type EmailSubCategory =
+  | "Project-Specific"
+  | "Department-Specific"
+  | "High-Priority"
+  | "Low-Priority"
+  | "General";
+
+export interface EmailCategorization {
+  primaryCategory: EmailCategory;
+  subCategory: EmailSubCategory;
+  confidence: number;
+}
+
+export interface CategoryResult {
+  section: string;
+  emails: ParsedEmail[];
+}

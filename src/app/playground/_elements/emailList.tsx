@@ -1,6 +1,8 @@
+
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ParsedEmail } from "@/lib/types/email";
 import { baseUrl } from "@/lib/utils";
 import { getServerSession } from "next-auth";
 
@@ -9,6 +11,7 @@ const EmailItem = ({ email }: { email: ParsedEmail }) => (
     <p className="font-semibold">{email.from}</p>
     <p>{email.subject}</p>
     <div>
+      {email.snippet}
       {/* <div
           dangerouslySetInnerHTML={{ __html: email.htmlMessage || "" }}
           style={{ background: "#ebeef4" }} 
@@ -49,36 +52,47 @@ const getEmails = async (accessToken: string) => {
 const EmailList = async () => {
   const session = await getServerSession(authOptions);
 
-  let emails: ParsedEmail[] = [];
+  let emails: {
+    section: string;
+    emails: ParsedEmail[];
+  }[] = [];
   if (session?.accessToken) {
     emails = await getEmails(session.accessToken);
+
+    // console.log("EMAILS : ", emails);
   }
 
-  const renderEmails = (priorityGrade: string) => {
-    const filteredEmails = emails?.filter(
-      (e) => e.priorityGrade === priorityGrade
-    );
-    return filteredEmails?.length > 0 ? (
-      filteredEmails.map((email) => (
-        <EmailItem key={email.threadId} email={email} />
-      ))
-    ) : (
-      <div className="p-2">
-        <p className="font-semibold">No emails</p>
-      </div>
-    );
-  };
+  // const renderEmails = (priorityGrade: string) => {
+  //   const filteredEmails = emails?.filter(
+  //     (e) => e.priorityGrade === priorityGrade
+  //   );
+  //   return filteredEmails?.length > 0 ? (
+  //     filteredEmails.map((email) => (
+  //       <EmailItem key={email.threadId} email={email} />
+  //     ))
+  //   ) : (
+  //     <div className="p-2">
+  //       <p className="font-semibold">No emails</p>
+  //     </div>
+  //   );
+  // };
 
   return (
-    <Tabs defaultValue="a" className="w-[800px]">
+    <Tabs defaultValue={emails && emails[0]?.section} className="w-[800px]">
       <TabsList>
-        <TabsTrigger value="a">Important</TabsTrigger>
-        <TabsTrigger value="b">Work updates</TabsTrigger>
-        <TabsTrigger value="c">Promotional emails</TabsTrigger>
+        {emails?.map((section) => (
+          <TabsTrigger value={section.section}>
+            {section.section} - {section.emails.length}
+          </TabsTrigger>
+        ))}
       </TabsList>
-      <TabsContent value="a">{renderEmails("A")}</TabsContent>
-      <TabsContent value="b">{renderEmails("B")}</TabsContent>
-      <TabsContent value="c">{renderEmails("C")}</TabsContent>
+      {emails?.map((section) => (
+        <TabsContent value={section.section}>
+          {section.emails.map((email) => (
+            <EmailItem key={email.threadId} email={email} />
+          ))}
+        </TabsContent>
+      ))}
     </Tabs>
   );
 };

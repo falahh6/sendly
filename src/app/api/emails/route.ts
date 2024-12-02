@@ -1,10 +1,14 @@
 import { google } from "googleapis";
 import { NextRequest, NextResponse } from "next/server";
-import { parseEmail } from "@/lib/utils";
+import { promises as fs } from "fs";
+import path from "path";
+import { categorizeEmails } from "@/lib/emails/email-categorisation-service";
 
 export async function GET(req: NextRequest) {
   try {
     const accessToken = req.headers.get("Authorization")?.split(" ")[1];
+
+    console.log("ACCESS TOKEN", accessToken);
 
     if (!accessToken) {
       return NextResponse.json({
@@ -13,35 +17,40 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const auth = new google.auth.OAuth2();
-    auth.setCredentials({ access_token: accessToken });
+    // const auth = new google.auth.OAuth2();
+    // auth.setCredentials({ access_token: accessToken });
 
-    const gmail = google.gmail({ version: "v1", auth });
+    // console.log("AUTH : ", auth);
 
-    const result = await gmail.users.messages.list({
-      userId: "me",
-      maxResults: 10,
-    });
+    // const gmail = google.gmail({ version: "v1", auth });
 
-    console.log("RESULTS : ", result);
+    // const result = await gmail.users.messages.list({
+    //   userId: "me",
+    //   maxResults: 200,
+    // });
 
-    const messages = result.data.messages || [];
+    // console.log("RESULTS : ", result.status, result.statusText, result.data);
 
-    const emailDetailsPromises = messages.map(async (message) => {
-      console.log("MESSAGE : ", message);
-      const messageDetails = await gmail.users.messages.get({
-        userId: "me",
-        id: message.id ?? "",
-      });
-      console.log("MESSAGE DETAILS : ", messageDetails);
-      return parseEmail(messageDetails.data as Email);
-    });
+    // const messages = result.data.messages ?? [];
 
-    const emailDetails = await Promise.all(emailDetailsPromises);
+    // const emailDetailsPromises = messages.map(async (message) => {
+    //   const messageDetails = await gmail.users.messages.get({
+    //     userId: "me",
+    //     id: message.id ?? "",
+    //   });
+    //   return parseEmail(messageDetails.data as Email);
+    // });
+
+    // const emailDetails = await Promise.all(emailDetailsPromises);
+
+    const filePath = path.join(process.cwd(), "emailDetails.json");
+
+    const emailDetailsRaw = await fs.readFile(filePath, "utf-8");
+    const emailDetails = JSON.parse(emailDetailsRaw);
 
     return NextResponse.json({
       status: 200,
-      data: emailDetails,
+      data: await categorizeEmails(emailDetails),
     });
   } catch (error) {
     return NextResponse.json({
