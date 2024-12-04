@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
     // const emailDetailsRaw = await fs.readFile(filePath, "utf-8");
     // const emailDetails = JSON.parse(emailDetailsRaw);
 
-    // console.log("EMAIL DETAILS (length): ", emailDetails?.length);
+    console.log("EMAIL DETAILS (length): ", emailDetails?.length);
 
     return NextResponse.json({
       status: 200,

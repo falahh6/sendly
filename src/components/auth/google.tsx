@@ -13,7 +13,7 @@ const ContinueWithGoogle = () => {
   return (
     <>
       {user ? (
-        <div className="p-2 flex flex-row gap-2 items-center bg-gray-200 rounded-lg">
+        <div className="p-2 flex flex-row gap-2 items-center bg-gray-200 rounded-lg dark:text-neutral-700 w-full xl:w-auto">
           <Image
             className="rounded-full"
             width={24}
@@ -30,6 +30,7 @@ const ContinueWithGoogle = () => {
             signIn("google");
           }}
           disabled={loading || status === "loading"}
+          className="w-full xl:w-auto"
         >
           {(loading || status === "loading") && (
             <Loader className="animate-spin h-4 w-4 mr-1" />

@@ -21,16 +21,9 @@ export const authOptions: NextAuthOptions = {
       if (account) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
-        // token.accessTokenExpires = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days
       }
 
       return token;
-
-      //   if (Date.now() < token.accessTokenExpires) {
-      //     return token;
-      //   }
-
-      //   return await refreshAccessToken(token);
     },
     async session({ session, token }: any) {
       session.accessToken = token.accessToken;
