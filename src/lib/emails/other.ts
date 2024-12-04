@@ -1,94 +1,137 @@
 import { CategoryResult, ParsedEmail } from "../types/email";
+import { emailKeywords } from "./data";
 
-export const categorizeEmails = (emails: ParsedEmail[]): CategoryResult[] => {
-  const categories: Record<string, ParsedEmail[]> = {};
-  const assignedEmailIds = new Set<string>(); // Track assigned emails
+const categorizedEmails: Record<string, ParsedEmail[]> = {};
 
-  const assignToCategory = (category: string, email: ParsedEmail) => {
-    if (assignedEmailIds.has(email.threadId)) return; // Skip if already categorized
-    if (!categories[category]) categories[category] = [];
-    categories[category].push({ ...email, category });
-    assignedEmailIds.add(email.threadId); // Mark email as categorized
-  };
+export const categorizeEmails = (
+  parsedEmails: ParsedEmail[]
+): CategoryResult[] => {
+  console.log("CATEGORIZING EMAILS (length)", parsedEmails.length);
+  for (const email of parsedEmails) {
+    if (isImportant(email)) {
+      assignToCategory("Important", email);
+      continue;
+    }
 
-  emails.forEach((email) => {
-    // **Structural Categorization**
-    const domain = email.from.split("@")[1];
-    const structuralCategory =
-      domain.includes("corporate") || domain.endsWith(".com")
-        ? "Corporate"
-        : "Personal";
-    assignToCategory(structuralCategory, email);
+    if (isNewsletter(email)) {
+      assignToCategory("Newsletter", email);
+      continue;
+    }
 
-    const senderAuthCategory = getSenderAuthCategory(email);
-    assignToCategory(senderAuthCategory, email);
+    if (isJobRelated(email)) {
+      assignToCategory("Job", email);
+      continue;
+    }
 
-    // **Relationship-Based Categorization**
-    const interactionCategory = getInteractionCategory(email);
-    assignToCategory(interactionCategory, email);
+    if (isSalesAndPromotional(email)) {
+      assignToCategory("Sales and Poromotions", email);
+      continue;
+    }
 
-    // **Content-Based Categorization**
-    const contentCategory = getContentCategory(email);
-    assignToCategory(contentCategory, email);
+    if (isSocial(email)) {
+      assignToCategory("Social", email);
+      continue;
+    }
 
-    const metadataCategory = getMetadataCategory(email);
-    assignToCategory(metadataCategory, email);
+    if (isPaymentsRelated(email)) {
+      assignToCategory("Payments", email);
+      continue;
+    }
 
-    // **Advanced ML Categorization**
-    const mlCategory = getMLBasedCategory(email);
-    assignToCategory(mlCategory, email);
-  });
+    assignToCategory("Others", email);
+  }
 
-  // Convert categorized emails into the CategoryResult format
-  return Object.keys(categories).map((key) => ({
-    section: key,
-    emails: categories[key],
-  }));
+  ensureAllEmailsCategorized(parsedEmails);
+
+  return Object.entries(categorizedEmails)
+    .filter(([, email]) => email.length > 0)
+    .map(([section, emails]) => {
+      return {
+        section,
+        emails,
+      };
+    });
 };
 
-// **Sender-Based Categorization**
-const getSenderAuthCategory = (email: ParsedEmail): string => {
-  const spfPassed = email.labelIds.includes("SPF_PASSED");
-  const dkimPassed = email.labelIds.includes("DKIM_PASSED");
-  const dmarcPassed = email.labelIds.includes("DMARC_PASSED");
+const assignToCategory = (category: string, email: ParsedEmail) => {
+  removeFromAllCategories(email);
 
-  return spfPassed && dkimPassed && dmarcPassed
-    ? "Verified Sender"
-    : "Unverified Sender";
+  if (!categorizedEmails[category]) {
+    categorizedEmails[category] = [];
+  }
+
+  if (!categorizedEmails[category].some((e) => e.threadId === email.threadId)) {
+    categorizedEmails[category].push(email);
+  }
 };
 
-// **Relationship-Based Categorization**
-const getInteractionCategory = (email: ParsedEmail): string => {
-  return email.labelIds.includes("INBOX")
-    ? "Primary Contact"
-    : "Secondary Contact";
+const removeFromAllCategories = (email: ParsedEmail) => {
+  for (const category in categorizedEmails) {
+    categorizedEmails[category] = categorizedEmails[category].filter(
+      (e) => e !== email
+    );
+  }
 };
 
-// **Content-Based Categorization**
-const getContentCategory = (email: ParsedEmail): string => {
-  const promotionalKeywords = ["sale", "discount", "offer"];
-  const transactionalKeywords = ["invoice", "receipt", "payment"];
-  const tokens = email.subject.toLowerCase().split(" ");
+const isNewsletter = (email: ParsedEmail): boolean => {
+  const newsletterIndicators = ["newsletter"];
 
-  if (tokens.some((token) => promotionalKeywords.includes(token)))
-    return "Promotional";
-  if (tokens.some((token) => transactionalKeywords.includes(token)))
-    return "Transactional";
-  return "Informational";
+  return newsletterIndicators.some((indicator) =>
+    email.from.toLowerCase().includes(indicator.toLowerCase())
+  );
 };
 
-// **Metadata-Based Categorization**
-const getMetadataCategory = (email: ParsedEmail): string => {
-  const hour = new Date().getHours();
-  const isWeekend = [0, 6].includes(new Date().getDay());
+const isJobRelated = (email: ParsedEmail): boolean => {
+  const jobIndicators = ["job", "hiring", "career"];
 
-  if (hour >= 9 && hour <= 17 && !isWeekend) return "Work Hours Communication";
-  if (isWeekend) return "Weekend Communication";
-  return "Off Hours Communication";
+  return jobIndicators.some((indicator) =>
+    email.from.toLowerCase().includes(indicator.toLowerCase())
+  );
 };
 
-// **ML-Based Categorization**
-const getMLBasedCategory = (email: ParsedEmail): string => {
-  const importanceScore = Math.random(); // Simulated ML-based scoring
-  return importanceScore > 0.7 ? "High Priority" : "Low Priority";
+const isSalesAndPromotional = (email: ParsedEmail): boolean => {
+  const salesIndicators = ["sale", "discount", "offer", "deals"];
+  const emailContent = `${email.subject}\n${email.snippet}\n${email.plainTextMessage}`;
+  return [...salesIndicators, ...emailKeywords.promotionalEmails].some(
+    (indicator) =>
+      email.from.toLowerCase().includes(indicator.toLowerCase()) ||
+      emailContent.toLowerCase().includes(indicator.toLowerCase())
+  );
+};
+
+const isSocial = (email: ParsedEmail): boolean => {
+  return emailKeywords.socials.some((indicator) =>
+    email.from.toLowerCase().includes(indicator.toLowerCase())
+  );
+};
+
+const isPaymentsRelated = (email: ParsedEmail): boolean => {
+  return emailKeywords.paymentsAndInvoices.some((indicator) =>
+    email.from.toLowerCase().includes(indicator.toLowerCase())
+  );
+};
+
+const isImportant = (email: ParsedEmail): boolean => {
+  const domains = ["@gmail", "@outlook", "@yahoo", "@hotmail"];
+
+  return (
+    domains.some((domain) => email.from.toLowerCase().includes(domain)) &&
+    email.labelIds.includes("IMPORTANT")
+  );
+};
+
+const ensureAllEmailsCategorized = (parsedEmails: ParsedEmail[]) => {
+  const categorizedEmailSet = new Set(
+    Object.values(parsedEmails)
+      .flat()
+      .map((email) => email.threadId + email.snippet)
+  );
+  console.log("CATEGORIZED EMAILS SET", categorizedEmailSet.size);
+
+  for (const email of parsedEmails) {
+    if (!categorizedEmailSet.has(email.threadId + email.snippet)) {
+      console.log("UNCATEGORIZED EMAIL", email);
+      assignToCategory("Others", email);
+    }
+  }
 };

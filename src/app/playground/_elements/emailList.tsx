@@ -1,24 +1,28 @@
-
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { Badge } from "@/components/ui/badge";
+// import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ParsedEmail } from "@/lib/types/email";
 import { baseUrl } from "@/lib/utils";
 import { getServerSession } from "next-auth";
 
 const EmailItem = ({ email }: { email: ParsedEmail }) => (
-  <div key={email.threadId} className="p-2 border-b">
-    <p className="font-semibold">{email.from}</p>
+  <div
+    key={email.threadId}
+    className={`p-2 border text-sm rounded-md ${
+      email.labelIds.includes("UNREAD") && "bg-neutral-200"
+    }`}
+  >
+    <p className="font-semibold">From : {email.from}</p>
     <p>{email.subject}</p>
     <div>
-      {email.snippet}
+      {/* {email.snippet} */}
       {/* <div
           dangerouslySetInnerHTML={{ __html: email.htmlMessage || "" }}
           style={{ background: "#ebeef4" }} 
         /> */}
     </div>
     <p>{email.date}</p>
-    <div className="flex flex-row gap-2 py-2">
+    {/* <div className="flex flex-row gap-2 py-2">
       {email.labelIds.map((label, idx) => (
         <Badge
           variant={"secondary"}
@@ -28,7 +32,7 @@ const EmailItem = ({ email }: { email: ParsedEmail }) => (
           {label}
         </Badge>
       ))}
-    </div>
+    </div> */}
   </div>
 );
 
@@ -78,16 +82,21 @@ const EmailList = async () => {
   // };
 
   return (
-    <Tabs defaultValue={emails && emails[0]?.section} className="w-[800px]">
+    <Tabs defaultValue={emails && emails[0]?.section} className="w-full">
       <TabsList>
-        {emails?.map((section) => (
-          <TabsTrigger value={section.section}>
+        {emails?.map((section, idx) => (
+          <TabsTrigger key={idx} value={section.section}>
             {section.section} - {section.emails.length}
           </TabsTrigger>
         ))}
       </TabsList>
-      {emails?.map((section) => (
-        <TabsContent value={section.section}>
+
+      {emails?.map((section, idx) => (
+        <TabsContent
+          key={idx}
+          value={section.section}
+          className="space-y-2 w-full"
+        >
           {section.emails.map((email) => (
             <EmailItem key={email.threadId} email={email} />
           ))}
