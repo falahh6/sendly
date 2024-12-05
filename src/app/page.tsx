@@ -61,10 +61,7 @@ export default async function Home() {
               asChild={(session && session?.accessToken.length > 0) || false}
               className="w-full xl:w-auto"
             >
-              <div>
-                <Link href={"/playground"}>Payground</Link>{" "}
-                <ArrowUpRight className="h-4 w-4 inline" />
-              </div>
+              <Link href={"/playground"}>Payground</Link>
             </Button>
           </div>{" "}
           <div className="flex flex-row max-sm:w-full items-center gap-4">
