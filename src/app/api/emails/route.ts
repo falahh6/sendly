@@ -6,6 +6,11 @@ import { categorizeEmails } from "@/lib/emails/other";
 import { parseEmail } from "@/lib/emails/utils";
 import { Email } from "@/lib/types/email";
 
+const auth = new google.auth.OAuth2({
+  clientId: process.env.GOOGLE_CID,
+  clientSecret: process.env.GOOGLE_CS,
+});
+
 export async function GET(req: NextRequest) {
   try {
     const accessToken = req.headers.get("Authorization")?.split(" ")[1];
@@ -19,7 +24,6 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const auth = new google.auth.OAuth2();
     auth.setCredentials({ access_token: accessToken });
 
     console.log("AUTH : ", auth);
@@ -28,7 +32,7 @@ export async function GET(req: NextRequest) {
 
     const result = await gmail.users.messages.list({
       userId: "me",
-      maxResults: 10,
+      maxResults: 50,
     });
 
     console.log("RESULTS : ", result.status, result.statusText, result.data);

@@ -95,7 +95,8 @@ const isSalesAndPromotional = (email: ParsedEmail): boolean => {
   return [...salesIndicators, ...emailKeywords.promotionalEmails].some(
     (indicator) =>
       email.from.toLowerCase().includes(indicator.toLowerCase()) ||
-      emailContent.toLowerCase().includes(indicator.toLowerCase())
+      emailContent.toLowerCase().includes(indicator.toLowerCase()) ||
+      email.labelIds.includes("CATEGORY_PROMOTIONS")
   );
 };
 
@@ -120,16 +121,29 @@ const isImportant = (email: ParsedEmail): boolean => {
   );
 };
 
+const getAllCategorizedThreadIds = (): Set<string> => {
+  const threadIdSet = new Set<string>();
+
+  for (const category in categorizedEmails) {
+    categorizedEmails[category].forEach((email) => {
+      threadIdSet.add(email.id); // Collect unique thread IDs
+    });
+  }
+
+  return threadIdSet;
+};
+
 const ensureAllEmailsCategorized = (parsedEmails: ParsedEmail[]) => {
-  const categorizedEmailSet = new Set(
-    Object.values(parsedEmails)
-      .flat()
-      .map((email) => email.threadId + email.snippet)
-  );
+  console.log("PARSED EMAILS SET", parsedEmails.length);
+  const check = Object.values(categorizedEmails).flat().length;
+  console.log("CATEGORIZED EMAILS", check);
+
+  const categorizedEmailSet = getAllCategorizedThreadIds();
+
   console.log("CATEGORIZED EMAILS SET", categorizedEmailSet.size);
 
   for (const email of parsedEmails) {
-    if (!categorizedEmailSet.has(email.threadId + email.snippet)) {
+    if (!categorizedEmailSet.has(email.id)) {
       console.log("UNCATEGORIZED EMAIL", email);
       assignToCategory("Others", email);
     }

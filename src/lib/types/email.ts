@@ -18,6 +18,7 @@ export type Email = {
 };
 
 export type ParsedEmail = {
+  id: string;
   from: string;
   to: string[];
   cc: string[];

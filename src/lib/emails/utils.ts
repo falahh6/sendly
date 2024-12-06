@@ -76,6 +76,7 @@ export function parseEmail(email: Email): ParsedEmail {
   });
 
   return {
+    id: email.id,
     from,
     to,
     cc,
