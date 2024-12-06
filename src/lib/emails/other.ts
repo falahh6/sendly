@@ -24,7 +24,7 @@ export const categorizeEmails = (
     }
 
     if (isSalesAndPromotional(email)) {
-      assignToCategory("Sales and Poromotions", email);
+      assignToCategory("Sales and Promotions", email);
       continue;
     }
 

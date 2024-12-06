@@ -676,7 +676,7 @@ export const newsletterIndicators = [
   "recap",
   "exclusive offer",
   "insider tips",
-  "what’s new",
+  "what's new",
   "promotions",
   "featured",
   "in case you missed it",
@@ -690,7 +690,7 @@ export const newsletterIndicators = [
   "get started",
   "our picks",
   "best of the week",
-  "don’t miss",
+  "don't miss",
   "news you can use",
   "roundup",
   "from our team",
@@ -714,4 +714,168 @@ export const newsletterIndicators = [
   "preferred subscriber",
   "member benefits",
   "pro tips",
+];
+
+export const cohereExamples = [
+  // Spam
+  {
+    text: "Win a free iPhone! Click here to claim your prize now.",
+    label: "Spam",
+    id: "spam-1",
+  },
+  {
+    text: "Limited time offer! Get 70% off all items. Act now!",
+    label: "Spam",
+    id: "spam-2",
+  },
+  {
+    text: "You've been selected for a $500 gift card. Claim it now.",
+    label: "Spam",
+    id: "spam-3",
+  },
+  {
+    text: "Your account has suspicious activity. Secure it here.",
+    label: "Spam",
+    id: "spam-4",
+  },
+  {
+    text: "Earn $500/day from home. No experience needed!",
+    label: "Spam",
+    id: "spam-5",
+  },
+
+  // Important
+  {
+    text: "Your tax documents are ready for review. Please download them here.",
+    label: "Important",
+    id: "important-1",
+  },
+  {
+    text: "Meeting rescheduled: New time is 2 PM tomorrow.",
+    label: "Important",
+    id: "important-2",
+  },
+  {
+    text: "Action required: Please approve the contract by EOD.",
+    label: "Important",
+    id: "important-3",
+  },
+  {
+    text: "Your application status has been updated. Check your portal for details.",
+    label: "Important",
+    id: "important-4",
+  },
+  {
+    text: "Security alert: Login attempt from an unrecognized device.",
+    label: "Important",
+    id: "important-5",
+  },
+
+  // Sales and Promotions
+  {
+    text: "Summer Sale! Up to 50% off on all clothing. Shop now.",
+    label: "Sales and Promotions",
+    id: "promo-1",
+  },
+  {
+    text: "Flash Sale: Get an extra 20% off with code SAVE20.",
+    label: "Sales and Promotions",
+    id: "promo-2",
+  },
+  {
+    text: "New arrivals in your favorite collection. Check them out!",
+    label: "Sales and Promotions",
+    id: "promo-3",
+  },
+  {
+    text: "Upgrade to premium and get 3 months free.",
+    label: "Sales and Promotions",
+    id: "promo-4",
+  },
+  {
+    text: "Exclusive deal: Buy 2, get 1 free on all skincare products.",
+    label: "Sales and Promotions",
+    id: "promo-5",
+  },
+
+  // Social
+  {
+    text: "John Doe liked your photo on Instagram.",
+    label: "Social",
+    id: "social-1",
+  },
+  {
+    text: "You've been tagged in a photo by Jane Smith.",
+    label: "Social",
+    id: "social-2",
+  },
+  {
+    text: "New message from Sarah: 'Let's catch up soon!'",
+    label: "Social",
+    id: "social-3",
+  },
+  {
+    text: "Your friend invited you to join their group on Facebook.",
+    label: "Social",
+    id: "social-4",
+  },
+  {
+    text: "David commented on your post: 'Great photo!'",
+    label: "Social",
+    id: "social-5",
+  },
+
+  // Updates
+  {
+    text: "Your package is out for delivery. Track it here.",
+    label: "Updates",
+    id: "updates-1",
+  },
+  {
+    text: "Your flight has been delayed by 30 minutes. View details.",
+    label: "Updates",
+    id: "updates-2",
+  },
+  {
+    text: "Software update available: Version 3.5. Install now.",
+    label: "Updates",
+    id: "updates-3",
+  },
+  {
+    text: "Your subscription has been renewed successfully.",
+    label: "Updates",
+    id: "updates-4",
+  },
+  {
+    text: "Your order has been shipped. Estimated delivery: 3-5 days.",
+    label: "Updates",
+    id: "updates-5",
+  },
+
+  // Others (General/Uncategorized)
+  {
+    text: "Let's grab lunch tomorrow at 1 PM?",
+    label: "Others",
+    id: "others-1",
+  },
+  {
+    text: "Check out this amazing article I found on productivity.",
+    label: "Others",
+    id: "others-2",
+  },
+  {
+    text: "Can you review the document and share your feedback?",
+    label: "Others",
+    id: "others-3",
+  },
+  {
+    text: "Happy birthday! Hope you have a wonderful day.",
+    label: "Others",
+    id: "others-4",
+  },
+  {
+    text: "Let's schedule a quick sync-up for later this week.",
+    label: "Others",
+    id: "others-5",
+  },
 ];

@@ -1,4 +1,4 @@
-import { ArrowUpRight, Dot, Github, Twitter } from "lucide-react";
+import { Dot, Github, Twitter } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import ContinueWithGoogle from "@/components/auth/google";
@@ -46,7 +46,7 @@ export default async function Home() {
                 "Analyse email tone and get suggestions for improved communication.",
             },
           ].map((item, idx) => (
-            <div className="text-xs md:text-sm" key={idx}>
+            <div className="text-xs md:text-sm" key={idx + item.title}>
               <h3 className="font-semibold">{item.title}</h3>
               <p className="">{item.description}</p>
             </div>
@@ -55,13 +55,21 @@ export default async function Home() {
       </div>
       <div className="h-[30vh] p-10 ">
         <div className="flex flex-col md:flex-row gap-4 justify-between">
-          <div>
+          <div className="space-x-3">
             <Button
               disabled={!session?.accessToken}
               asChild={(session && session?.accessToken.length > 0) || false}
               className="w-full xl:w-auto"
             >
               <Link href={"/playground"}>Payground</Link>
+            </Button>
+            <Button
+              disabled={!session?.accessToken}
+              asChild={(session && session?.accessToken.length > 0) || false}
+              className="w-full xl:w-auto"
+              variant={"link"}
+            >
+              <Link href={"/fetch"}>CSV</Link>
             </Button>
           </div>{" "}
           <div className="flex flex-row max-sm:w-full items-center gap-4">
