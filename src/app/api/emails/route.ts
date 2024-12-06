@@ -9,6 +9,7 @@ import { Email } from "@/lib/types/email";
 const auth = new google.auth.OAuth2({
   clientId: process.env.GOOGLE_CID,
   clientSecret: process.env.GOOGLE_CS,
+  eagerRefreshThresholdMillis: 30 * 24 * 60 * 60,
 });
 
 export async function GET(req: NextRequest) {

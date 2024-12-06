@@ -63,14 +63,13 @@ export default async function Home() {
             >
               <Link href={"/playground"}>Payground</Link>
             </Button>
-            <Button
-              disabled={!session?.accessToken}
-              asChild={(session && session?.accessToken.length > 0) || false}
+            {/* <Button
+              disabled={true}
               className="w-full xl:w-auto"
               variant={"link"}
             >
               <Link href={"/fetch"}>CSV</Link>
-            </Button>
+            </Button> */}
           </div>{" "}
           <div className="flex flex-row max-sm:w-full items-center gap-4">
             {" "}
