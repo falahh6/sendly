@@ -1,9 +1,9 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-// import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ParsedEmail } from "@/lib/types/email";
 import { baseUrl, formatStringDate } from "@/lib/utils";
 import { getServerSession } from "next-auth";
+// import { CohereClassify } from "./cohere-solution";
 
 const EmailItem = ({ email }: { email: ParsedEmail }) => (
   <div
@@ -16,7 +16,7 @@ const EmailItem = ({ email }: { email: ParsedEmail }) => (
       <p className="font-semibold">{email.from}</p>
       <p>{email.subject}</p>
     </div>
-    <p>{formatStringDate(email.date || "")}</p>
+    <p>{formatStringDate(email.date ?? "")}</p>
   </div>
 );
 
@@ -52,16 +52,17 @@ const EmailList = async () => {
     <Tabs defaultValue={emails && emails[0]?.section} className="w-full">
       <TabsList className="mb-2">
         {emails?.map((section, idx) => (
-          <TabsTrigger key={idx} value={section.section}>
+          <TabsTrigger key={idx + section.section} value={section.section}>
             {section.section} - {section.emails.length}
           </TabsTrigger>
         ))}
       </TabsList>
+      {/* <CohereClassify emails={emails} /> */}
 
       {emails
         ?.map((section) => ({
           ...section,
-          emails: section.emails.sort(
+          emails: section.emails.toSorted(
             (a, b) =>
               new Date(b.date ?? "").getTime() -
               new Date(a.date ?? "").getTime()
@@ -69,7 +70,7 @@ const EmailList = async () => {
         }))
         .map((section, idx) => (
           <TabsContent
-            key={idx}
+            key={idx + section.section}
             value={section.section}
             className="space-y-2 w-full"
           >
