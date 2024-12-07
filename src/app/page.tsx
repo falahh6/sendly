@@ -6,6 +6,7 @@ import Logout from "@/components/auth/Logout";
 import { Button } from "@/components/ui/button";
 import { getServerSession } from "next-auth";
 import { authOptions } from "./api/auth/[...nextauth]/authOptions";
+import Integrations from "@/components/integrations/google";
 
 const SocialLink = ({
   href,
@@ -21,6 +22,9 @@ const SocialLink = ({
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
+
+  console.log(session);
+
   return (
     <main className="bg-white dark:bg-neutral-700 text-neutral-500 dark:text-neutral-300">
       <div className="bg-neutral-100 dark:bg-neutral-800 p-10 h-[50vh] flex flex-col md:flex-row md:items-end justify-between">
@@ -63,18 +67,13 @@ export default async function Home() {
             >
               <Link href={"/playground"}>Payground</Link>
             </Button>
-            {/* <Button
-              disabled={true}
-              className="w-full xl:w-auto"
-              variant={"link"}
-            >
-              <Link href={"/fetch"}>CSV</Link>
-            </Button> */}
           </div>{" "}
           <div className="flex flex-row max-sm:w-full items-center gap-4">
-            {" "}
             <ContinueWithGoogle /> <Logout />
           </div>
+        </div>
+        <div>
+          <Integrations />
         </div>
       </div>
       <div className="p-10 h-[20vh] space-y-2 w-full flex flex-col md:flex-row justify-between items-end">
