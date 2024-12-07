@@ -72,7 +72,9 @@ export async function GET(req: NextRequest) {
 
     // You can store tokens in a session or database (e.g., Redis, database, etc.)
 
-    return NextResponse.redirect(`http://localhost:3000?redirect=outlook`);
+    return NextResponse.redirect(
+      `${process.env.NEXT_PUBLIC_SITE_URL}?redirect=outlook`
+    );
   } catch (error) {
     return NextResponse.json("Failed to authenticate: " + error, {
       status: 500,

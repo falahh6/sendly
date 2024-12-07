@@ -20,7 +20,9 @@ export async function GET(req: NextRequest) {
     oAuth2Client.setCredentials(tokens);
     console.log("TOKENS : ", tokens);
 
-    return NextResponse.redirect(`http://localhost:3000?redirect=google`);
+    return NextResponse.redirect(
+      `${process.env.NEXT_PUBLIC_SITE_URL}?redirect=google`
+    );
   } catch (error) {
     return NextResponse.json("Failed to authenticate: " + error, {
       status: 500,
