@@ -73,7 +73,11 @@ export default async function Home() {
           </div>
         </div>
         <div>
-          <Integrations />
+          {session?.user ? (
+            <Integrations />
+          ) : (
+            <p className="mt-4 text-sm">Login for integrations</p>
+          )}
         </div>
       </div>
       <div className="p-10 h-[20vh] space-y-2 w-full flex flex-col md:flex-row justify-between items-end">

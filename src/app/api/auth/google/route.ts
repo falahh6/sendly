@@ -1,5 +1,6 @@
 import { google } from "googleapis";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { serialize } from "cookie";
 
 const oAuth2Client = new google.auth.OAuth2({
   clientId: process.env.GOOGLE_CID,
@@ -7,45 +8,38 @@ const oAuth2Client = new google.auth.OAuth2({
   redirectUri: process.env.GOOGLE_REDIRECT_URI,
 });
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const url = new URL(request.url);
+  const userAccessToken = url.searchParams.get("userAccessToken");
+
+  console.log("userAccessToken : ", userAccessToken);
+
   const authUrl = oAuth2Client.generateAuthUrl({
     access_type: "offline",
-    scope: ["https://www.googleapis.com/auth/gmail.send"],
+    scope: [
+      "https://www.googleapis.com/auth/gmail.readonly", // Read-only access to emails
+      "https://www.googleapis.com/auth/gmail.send", // To send emails
+      "https://www.googleapis.com/auth/gmail.modify",
+      "https://www.googleapis.com/auth/gmail.compose",
+      "https://www.googleapis.com/auth/gmail.metadata",
+    ],
     prompt: "consent",
   });
 
-  console.log("AUTH URL : ", authUrl);
+  // Create the response object
+  const response = NextResponse.redirect(authUrl);
 
-  return NextResponse.redirect(authUrl);
+  // If there is a userAccessToken, set it in the cookies
+  if (userAccessToken) {
+    response.headers.set(
+      "Set-Cookie",
+      serialize("userAccessToken", userAccessToken, {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production", // Only set secure cookies in production
+      })
+    );
+  }
+
+  return response;
 }
-
-// export async function POST(req) {
-//   const { code } = await req.json();
-//   const { tokens } = await oAuth2Client.getToken(code);
-//   oAuth2Client.setCredentials(tokens);
-
-//   const accessToken = tokens.access_token;
-
-//   const transport = nodemailer.createTransport({
-//     service: 'gmail',
-//     auth: {
-//       type: 'OAuth2',
-//       user: process.env.GOOGLE_USER_EMAIL,
-//       clientId: process.env.GOOGLE_CLIENT_ID,
-//       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-//       refreshToken: tokens.refresh_token,
-//       accessToken,
-//     },
-//   });
-
-//   const mailOptions = {
-//     from: process.env.GOOGLE_USER_EMAIL,
-//     to: 'recipient@example.com',
-//     subject: 'Test Email from Next.js',
-//     text: 'Hello from Gmail!',
-//   };
-
-//   await transport.sendMail(mailOptions);
-
-//   return new Response('Email sent successfully!');
-// }

@@ -1,3 +1,4 @@
+import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -7,6 +8,10 @@ export async function GET(req: NextRequest) {
   const client_secret = process.env.AZURE_CLIENT_SECRET as string;
   const redirect_uri = process.env.AZURE_REDIRECT_URI as string;
   const tenant_id = process.env.AZURE_TENANT_ID as string;
+
+  const cookies = req.cookies;
+  const userAccessToken = cookies.get("userAccessToken")?.value;
+  console.log("Access Token: ", userAccessToken);
 
   if (!code) {
     return NextResponse.json("Authorization code is missing", { status: 400 });
@@ -60,7 +65,7 @@ export async function GET(req: NextRequest) {
 
     const profileData = {
       displayName: profileResponseData.displayName,
-      mail:
+      email:
         profileResponseData.mail ||
         profileResponseData.userPrincipalName
           ?.split("#EXT#")[0]
@@ -68,13 +73,53 @@ export async function GET(req: NextRequest) {
       userPrincipalName: profileResponseData.userPrincipalName,
     };
 
-    console.log("PROFILE DATA : ", profileData);
+    const user = await prisma.user.findFirst({
+      where: {
+        authToken: userAccessToken as string,
+      },
+    });
 
-    // You can store tokens in a session or database (e.g., Redis, database, etc.)
+    if (!user) {
+      return NextResponse.redirect(
+        `${process.env.NEXT_PUBLIC_SITE_URL}?error=NoUserFound`
+      );
+    } else {
+      console.log("User found:", user);
+    }
 
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_SITE_URL}?redirect=outlook`
-    );
+    const integration = await prisma.integration.findFirst({
+      where: {
+        email: profileData.email,
+      },
+    });
+
+    console.log("Integration : ", integration);
+
+    if (!integration) {
+      await prisma.integration.create({
+        data: {
+          accessToken: accessToken as string,
+          refreshToken: "",
+          provider: "Azure",
+          name: "Outlook",
+          profile: {
+            email: profileData.email,
+          },
+          email: profileData.email,
+          userId: user.id,
+        },
+      });
+
+      return NextResponse.redirect(
+        `${process.env.NEXT_PUBLIC_SITE_URL}?redirect=outlook`
+      );
+    } else {
+      console.log("Integration found : ", integration);
+
+      return NextResponse.redirect(
+        `${process.env.NEXT_PUBLIC_SITE_URL}?redirect=outlook&error=IntegrationExists`
+      );
+    }
   } catch (error) {
     return NextResponse.json("Failed to authenticate: " + error, {
       status: 500,
