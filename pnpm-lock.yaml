@@ -35,6 +35,9 @@ importers:
       cohere-ai:
         specifier: ^7.15.0
         version: 7.15.0(@aws-sdk/client-sso-oidc@3.699.0(@aws-sdk/client-sts@3.699.0))
+      cookie:
+        specifier: ^1.0.2
+        version: 1.0.2
       googleapis:
         specifier: ^144.0.0
         version: 144.0.0
@@ -1209,6 +1212,10 @@ packages:
   cookie@0.7.2:
     resolution: {integrity: sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w==}
     engines: {node: '>= 0.6'}
+
+  cookie@1.0.2:
+    resolution: {integrity: sha512-9Kr/j4O16ISv8zBBhJoi4bXOYNTkFLOqSL3UDB0njXxCXNezjeyVrJyGOWtgfs/q2km1gwBcfH8q1yEGoMYunA==}
+    engines: {node: '>=18'}
 
   create-require@1.1.1:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}
@@ -4262,6 +4269,8 @@ snapshots:
       yargs-parser: 20.2.9
 
   cookie@0.7.2: {}
+
+  cookie@1.0.2: {}
 
   create-require@1.1.1: {}
 

@@ -24,12 +24,13 @@ model User {
 model Integration {
   id          Int    @id @default(autoincrement())
   name        String
-  profile      Json   
+  profile     Json   
   accessToken String
   refreshToken String?
   provider    String
   userId      String 
   user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email       String @unique
 
   @@map("integrations") 
 }
