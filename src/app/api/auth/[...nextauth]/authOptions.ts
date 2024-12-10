@@ -3,7 +3,7 @@
 import prisma from "@/lib/prisma";
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { google } from "googleapis"; // Make sure googleapis is imported
+import cryptoo from "crypto";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -13,87 +13,40 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, account }: any) {
+    async jwt({ token, account, user: authUser }: any) {
       console.log("JWT Callback token :", token);
       console.log("JWT Callback account :", account);
 
-      // Check if the account has been authenticated (first-time login or new authentication)
-      if (account) {
-        // Fetch user from the database (if exists)
-        let user = await prisma.user.findFirst({
-          where: {
-            email: token.email,
-          },
-        });
+      if (!account) return token;
 
-        // If user doesn't exist, create the user
-        if (!user) {
-          user = await prisma.user.create({
-            data: {
-              email: token.email,
-              name: token.name,
-              emailVerified: true,
-              password: "NA",
-              authToken: account.access_token,
-            },
-          });
-          console.log("User created:", user);
-        } else {
-          console.log("User found:", user);
-        }
+      let user = await prisma.user.findFirst({
+        where: {
+          email: token.email,
+        },
+      });
 
-        // Store the access token and refresh token in the JWT token for session usage
-        token.accessToken = account.access_token;
-        token.refreshToken = account.refresh_token;
-
-        // Update the user record with the new tokens
-        await prisma.user.update({
-          where: {
-            email: token.email, // Assumes email is unique
-          },
+      if (!user) {
+        user = await prisma.user.create({
           data: {
-            authToken: account.access_token, // Update access token
+            email: token.email,
+            name: token.name,
+            emailVerified: true,
+            password: "NA",
+            authToken: cryptoo.randomBytes(64).toString("hex"),
           },
         });
-        console.log("User tokens updated in database.");
-      } else if (token.refreshToken) {
-        // If the refresh token exists, the access token has expired, so refresh it
-        try {
-          const googleOAuth = new google.auth.OAuth2(
-            process.env.GOOGLE_CID,
-            process.env.GOOGLE_CS
-          );
-
-          // Set the refresh token to get a new access token
-          googleOAuth.setCredentials({
-            refresh_token: token.refreshToken,
-          });
-
-          // Refresh the access token
-          const newTokens = await googleOAuth.refreshAccessToken();
-          token.accessToken = newTokens.credentials.access_token;
-          console.log("Refreshed Token:", newTokens);
-
-          // After refreshing, update the user record with the new access token
-          await prisma.user.update({
-            where: {
-              email: token.email, // Assumes email is unique
-            },
-            data: {
-              authToken: newTokens.credentials.access_token, // Update with new access token
-            },
-          });
-          console.log("User tokens updated in database after refresh.");
-        } catch (error) {
-          console.error("Failed to refresh token:", error);
-        }
+        console.log("User created:", user);
+      } else {
+        console.log("User found:", user);
       }
 
-      return token; // Return the updated token with the new access token
+      token.accessToken = user.authToken;
+
+      return token;
     },
     async session({ session, token }: any) {
-      // Attach the latest access token to the session object
       session.accessToken = token.accessToken;
+
       return session;
     },
   },

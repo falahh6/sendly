@@ -18,7 +18,7 @@ const ContinueWithGoogle = () => {
             className="rounded-full"
             width={24}
             height={24}
-            src={user.user?.image || ""}
+            src={user.user?.image ?? ""}
             alt="Avatar"
           />{" "}
           <p className="text-sm font-semibold">{user.user?.email}</p>
