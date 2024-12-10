@@ -37,3 +37,20 @@ export function formatStringDate(inputDate: string): string {
   });
   return `${formattedDate} - ${time}`;
 }
+
+export const fetcher = async (url: string, authToken: string) => {
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      auth: authToken,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Failed to fetch data");
+  }
+
+  return response.json();
+};
