@@ -13,7 +13,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, account, user: authUser }: any) {
+    async jwt({ token, account }: any) {
       console.log("JWT Callback token :", token);
       console.log("JWT Callback account :", account);
 
