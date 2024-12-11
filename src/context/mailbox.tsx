@@ -9,6 +9,7 @@ import {
   useState,
   Dispatch,
   SetStateAction,
+  useMemo,
 } from "react";
 import useSWR from "swr";
 
@@ -35,10 +36,10 @@ const IntegrationContext = createContext<IntegrationContextType | undefined>(
 export function MailboxProvider({
   children,
   userSessionData,
-}: {
+}: Readonly<{
   children: ReactNode;
   userSessionData: Session | null;
-}) {
+}>) {
   const [currentIntegration, setCurrentIntegration] = useState<
     Integration | undefined
   >();
@@ -53,12 +54,15 @@ export function MailboxProvider({
 
   const integrations = data?.integrations || [];
 
-  const value = {
-    integrations,
-    currentIntegration,
-    setCurrentIntegration,
-    isLoading,
-  };
+  const value = useMemo(
+    () => ({
+      integrations,
+      currentIntegration,
+      setCurrentIntegration,
+      isLoading,
+    }),
+    [integrations, currentIntegration, setCurrentIntegration, isLoading]
+  );
 
   return (
     <IntegrationContext.Provider value={value}>

@@ -54,3 +54,7 @@ export const fetcher = async (url: string, authToken: string) => {
 
   return response.json();
 };
+
+export function removeNoreplyEmail(from: string): string {
+  return from.replace(/<[^>]+>/, "");
+}

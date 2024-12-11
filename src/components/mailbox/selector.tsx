@@ -13,19 +13,23 @@ import { Icons } from "../icons";
 export const Selector = () => {
   const { integrations, isLoading } = useIntegrations();
 
+  const valChangeHandler = (val: string) => {
+    console.log("Selected Integration : ", val);
+  };
+
   return (
     <>
       {isLoading ? (
         <div className="h-12 w-52 border bg-gray-100 animate-pulse rounded-xl"></div>
       ) : (
-        <Select value={integrations[0]?.id}>
+        <Select onValueChange={valChangeHandler} value={integrations[0]?.id}>
           <SelectTrigger className="text-left w-fit h-fit rounded-xl ring-0">
             <SelectValue placeholder="one" className="text-left" />
           </SelectTrigger>
           <SelectContent className="rounded-xl">
-            {integrations.map((integration, idx) => (
+            {integrations.map((integration) => (
               <SelectItem
-                key={idx}
+                key={integration.id}
                 value={integration.id}
                 className="rounded-lg"
               >
