@@ -84,19 +84,6 @@ export default function Integrations() {
           Authenticate with Outlook
         </Button>
       </div>
-      {/* {integrations.length > 0 && (
-        <div className="w-full">
-          <h3 className="text-lg font-semibold">Integrations</h3>
-          <div className="flex flex-col gap-2">
-            {integrations.map((integration) => (
-              <div key={integration.id}>
-                <p>{integration.name}</p>
-                <p>{integration.profile.email}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )} */}
     </div>
   );
 }

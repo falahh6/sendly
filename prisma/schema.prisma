@@ -33,4 +33,44 @@ model Integration {
   email       String @unique
 
   @@map("integrations") 
+  Mails  Mail[]
+}
+
+model Mail {
+  id                String              @id @default(uuid())
+  from              String
+  to                String[]
+  cc                String[]
+  bcc               String[]
+  date              DateTime?          
+  subject           String
+  messageId         String?            
+  replyTo           String?             
+  snippet           String
+  threadId          String
+  plainTextMessage  String?
+  htmlMessage       String?
+  attachments       Attachment[]        @relation("MailAttachments") 
+  labelIds          String[]
+  priorityGrade     String
+  categorization    Json?              
+  sentimentScore    Float?             
+  privacyCompliant  Boolean?            
+  category          String?
+
+  integrationId     Int                 
+  integration       Integration         @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@map("mails")
+}
+
+model Attachment {
+  id          String @id @default(uuid())
+  filename     String
+  mimeType    String
+  data        String? 
+  mailId      String 
+  mail        Mail    @relation("MailAttachments", fields: [mailId], references: [id], onDelete: Cascade)
+
+  @@map("attachments")
 }
