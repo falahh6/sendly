@@ -11,6 +11,7 @@ const oAuth2Client = new google.auth.OAuth2({
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const userAccessToken = url.searchParams.get("userAccessToken");
+  const email = url.searchParams.get("email");
 
   console.log("userAccessToken : ", userAccessToken);
 
@@ -24,19 +25,18 @@ export async function GET(request: NextRequest) {
       "https://www.googleapis.com/auth/gmail.metadata",
     ],
     prompt: "consent",
+    login_hint: email ?? "",
   });
 
-  // Create the response object
   const response = NextResponse.redirect(authUrl);
 
-  // If there is a userAccessToken, set it in the cookies
   if (userAccessToken) {
     response.headers.set(
       "Set-Cookie",
       serialize("userAccessToken", userAccessToken, {
         path: "/",
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // Only set secure cookies in production
+        secure: process.env.NODE_ENV === "production",
       })
     );
   }

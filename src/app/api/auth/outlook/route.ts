@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
 
   const url = new URL(request.url);
   const userAccessToken = url.searchParams.get("userAccessToken");
+  const email = url.searchParams.get("email");
 
   console.log("userAccessToken : ", userAccessToken);
 
@@ -20,7 +21,8 @@ export async function GET(request: NextRequest) {
       redirect_uri: redirect_uri,
       response_type: "code",
       scope: scope,
-      prompt: "consent", // Force consent screen every time
+      // prompt: "consent", // Force consent screen every time
+      login_hint: email ?? "",
     });
 
   const response = NextResponse.redirect(authUrl);

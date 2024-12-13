@@ -13,14 +13,6 @@ import {
 } from "react";
 import useSWR from "swr";
 
-type Integration = {
-  id: string;
-  name: string;
-  email: string;
-  accessToken: string;
-  provider: "Google" | "Outlook";
-};
-
 interface IntegrationContextType {
   integrations: Integration[];
   currentIntegration: Integration | undefined;
