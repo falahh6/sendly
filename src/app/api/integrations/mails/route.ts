@@ -30,11 +30,11 @@ export async function GET(request: NextRequest) {
 
     const mails = await prisma.mail.findMany({
       where: {
-        integration: {
-          id: Number(integrationId),
-        },
+        integrationId: Number(integrationId),
       },
     });
+
+    console.log("MAILS", mails.length);
 
     return NextResponse.json(mails, { status: 200 });
   } catch (error) {

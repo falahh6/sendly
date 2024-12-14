@@ -10,7 +10,7 @@ import {
 import { Icons } from "../icons";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader } from "lucide-react";
+import { Loader, Plus } from "lucide-react";
 
 export const Selector = ({
   integrationId,
@@ -23,6 +23,12 @@ export const Selector = ({
   const [isPending, startTransition] = useTransition();
 
   const valChangeHandler = (val: string) => {
+    if (val === "add-new") {
+      startTransition(() => {
+        router.push("/mailbox?m=add-new");
+      });
+      return;
+    }
     console.log("Selected Integration:", val);
     startTransition(() => {
       router.push("/mailbox/" + val);
@@ -70,6 +76,17 @@ export const Selector = ({
                   </div>
                 </SelectItem>
               ))}
+              <SelectItem key={integrations.length} value="add-new">
+                <div className="flex flex-row gap-2 w-full">
+                  <div className="bg-neutral-50 h-6 w-6 rounded-full p-1">
+                    <Plus className="h-4 w-4" />
+                  </div>
+                  <div className="text-xs">
+                    <h4 className="font-bold">Add new</h4>
+                    <p>Connect a new mailbox</p>
+                  </div>
+                </div>
+              </SelectItem>
             </SelectContent>
           </Select>
         </>

@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useIntegrations } from "@/context/mailbox";
-import { ChevronRight, Plus } from "lucide-react";
+import { ChevronRight, Loader, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -24,12 +24,13 @@ const Page = () => {
   const router = useRouter();
   const params = useSearchParams();
   const mode = params.get("m");
+  const [visitLoading, setVisitLoading] = useState(false);
 
   useEffect(() => {
     if (!isLoading && integrations.length > 0) {
       setSelectedIntegration(integrations[0].id);
     }
-  }, [isLoading]);
+  }, [isLoading, integrations]);
 
   return (
     <div className="flex items-center justify-center h-screen text-neutral-600">
@@ -102,11 +103,17 @@ const Page = () => {
                 variant={"outline"}
                 className="p-2 rounded-xl bg-gray-50"
                 asChild={!isLoading}
-                disabled={isLoading}
+                disabled={isLoading || visitLoading}
+                onClick={() => {
+                  setVisitLoading(true);
+                }}
               >
                 <Link href={`/mailbox/${selectedIntegration}`}>
-                  {" "}
-                  <ChevronRight />
+                  {visitLoading ? (
+                    <Loader className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ChevronRight />
+                  )}
                 </Link>
               </Button>
             </div>

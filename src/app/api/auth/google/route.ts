@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       "https://www.googleapis.com/auth/gmail.send", // To send emails
       "https://www.googleapis.com/auth/gmail.modify",
       "https://www.googleapis.com/auth/gmail.compose",
-      "https://www.googleapis.com/auth/gmail.metadata",
+      "https://mail.google.com/",
     ],
     prompt: "consent",
     login_hint: email ?? "",

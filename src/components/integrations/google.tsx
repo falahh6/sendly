@@ -64,7 +64,7 @@ export default function Integrations() {
 
       fetchIntegrations(data?.accessToken);
     }
-  }, [status]);
+  }, [status, data]);
 
   return (
     <div className="flex flex-row gap-2 justify-between lg:justify-normal mt-2 w-full">

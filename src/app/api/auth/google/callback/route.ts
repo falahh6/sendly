@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
     });
 
     if (!integration) {
-      await prisma.integration.create({
+      const integration = await prisma.integration.create({
         data: {
           accessToken: tokens.access_token as string,
           refreshToken: tokens.refresh_token,
@@ -69,13 +69,13 @@ export async function GET(req: NextRequest) {
       });
 
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}?redirect=google`
+        `${process.env.NEXT_PUBLIC_SITE_URL}/mailbox/${integration.id}?redirect=google`
       );
     } else {
       console.log("Integration found : ", integration);
 
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}?redirect=google&error=IntegrationExists`
+        `${process.env.NEXT_PUBLIC_SITE_URL}/mailbox/${integration.id}?redirect=google&error=IntegrationExists`
       );
     }
   } catch (error) {

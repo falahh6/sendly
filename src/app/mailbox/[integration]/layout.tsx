@@ -6,6 +6,9 @@ import {
 } from "@/components/ui/resizable";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { MailList } from "../_components/MailList";
+import { ImportEmails } from "../_components/ImportEmails";
+import React from "react";
 
 const getIntegrations = async (authToken: string) => {
   const response = await fetch(
@@ -29,6 +32,22 @@ const getIntegrations = async (authToken: string) => {
   return data.integrations || [];
 };
 
+const fetchEmails = async (authToken: string, integrationId: string) => {
+  const response = await fetch(
+    process.env.NEXT_PUBLIC_SITE_URL +
+      `/api/integrations/mails?integration_id=${integrationId}`,
+    {
+      headers: {
+        auth: `${authToken}`,
+      },
+      method: "GET",
+    }
+  );
+
+  const data = await response.json();
+  return data;
+};
+
 const MailboxLayout = async ({
   children,
   params,
@@ -38,6 +57,10 @@ const MailboxLayout = async ({
 }) => {
   const session = await getServerSession(authOptions);
   const integrationsData = await getIntegrations(session?.accessToken ?? "");
+  const emails = await fetchEmails(
+    session?.accessToken ?? "",
+    params.integration
+  );
 
   return (
     <>
@@ -56,9 +79,11 @@ const MailboxLayout = async ({
             key={params.integration}
           />
         </div>
-        <div>Mail, compose tools</div>
+        <div>
+          <ImportEmails integrationId={params.integration} type="nav" />
+        </div>
       </div>
-      <div className="h-[80vh] w-full">
+      <div className="h-[78vh] w-full">
         <ResizablePanelGroup direction="horizontal" className="space-x-1">
           <ResizablePanel
             className="p-4 bg-neutral-50 rounded-lg border"
@@ -74,7 +99,11 @@ const MailboxLayout = async ({
             defaultSize={30}
             minSize={30}
           >
-            {/* <MailList /> */}
+            {emails?.length > 0 ? (
+              <MailList emails={emails} />
+            ) : (
+              <ImportEmails integrationId={params.integration} />
+            )}
           </ResizablePanel>
           <ResizableHandle className="bg-transparent dark:bg-transparent" />
           {children}
