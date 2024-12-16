@@ -17,13 +17,7 @@ export async function GET(request: NextRequest) {
 
   const authUrl = oAuth2Client.generateAuthUrl({
     access_type: "offline",
-    scope: [
-      "https://www.googleapis.com/auth/gmail.readonly", // Read-only access to emails
-      "https://www.googleapis.com/auth/gmail.send", // To send emails
-      "https://www.googleapis.com/auth/gmail.modify",
-      "https://www.googleapis.com/auth/gmail.compose",
-      "https://mail.google.com/",
-    ],
+    scope: ["https://mail.google.com/"], //all remail access
     prompt: "consent",
     login_hint: email ?? "",
   });

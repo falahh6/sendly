@@ -9,6 +9,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { MailList } from "../_components/MailList";
 import { ImportEmails } from "../_components/ImportEmails";
 import React from "react";
+import { redirect } from "next/navigation";
 
 const getIntegrations = async (authToken: string) => {
   const response = await fetch(
@@ -45,7 +46,7 @@ const fetchEmails = async (authToken: string, integrationId: string) => {
   );
 
   const data = await response.json();
-  return data;
+  return data.mails;
 };
 
 const MailboxLayout = async ({
@@ -57,6 +58,20 @@ const MailboxLayout = async ({
 }) => {
   const session = await getServerSession(authOptions);
   const integrationsData = await getIntegrations(session?.accessToken ?? "");
+
+  if (integrationsData?.length === 0) {
+    redirect("/mailbox/?m=add-new");
+  }
+
+  console.log("Integrations : ", integrationsData);
+
+  if (
+    integrationsData?.find((i: Integration) => i.id == params.integration) ===
+    undefined
+  ) {
+    return "INVALID INTEGRATION, Please check if you have correct ID ";
+  }
+
   const emails = await fetchEmails(
     session?.accessToken ?? "",
     params.integration
@@ -80,7 +95,15 @@ const MailboxLayout = async ({
           />
         </div>
         <div>
-          <ImportEmails integrationId={params.integration} type="nav" />
+          <ImportEmails
+            integrationId={params.integration}
+            type="nav"
+            integrationProfiles={
+              integrationsData?.find(
+                (i: Integration) => i.id == params.integration
+              )?.profile
+            }
+          />
         </div>
       </div>
       <div className="h-[78vh] w-full">
@@ -96,7 +119,7 @@ const MailboxLayout = async ({
           <ResizableHandle className="bg-transparent dark:bg-transparent" />
           <ResizablePanel
             className="bg-white rounded-lg border"
-            defaultSize={30}
+            defaultSize={85}
             minSize={30}
           >
             {emails?.length > 0 ? (

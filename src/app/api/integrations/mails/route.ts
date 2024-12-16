@@ -28,15 +28,38 @@ export async function GET(request: NextRequest) {
     });
     console.log("USER", user);
 
+    const page = parseInt(params.get("page") ?? "1", 10);
+    const pageSize = parseInt(params.get("pageSize") ?? "50", 10);
+    const skip = (page - 1) * pageSize;
+
     const mails = await prisma.mail.findMany({
+      where: {
+        integrationId: Number(integrationId),
+      },
+      take: pageSize,
+      skip: skip,
+    });
+
+    const totalMails = await prisma.mail.count({
       where: {
         integrationId: Number(integrationId),
       },
     });
 
-    console.log("MAILS", mails.length);
+    const totalPages = Math.ceil(totalMails / pageSize);
 
-    return NextResponse.json(mails, { status: 200 });
+    return NextResponse.json(
+      {
+        mails,
+        pagination: {
+          totalMails,
+          totalPages,
+          currentPage: page,
+          pageSize,
+        },
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error fetching mails:", error);
     return NextResponse.json(

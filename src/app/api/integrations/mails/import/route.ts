@@ -1,4 +1,3 @@
-// app/api/gmail-import/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { gmail_v1, google } from "googleapis";
 import { PrismaClient } from "@prisma/client";
@@ -25,9 +24,10 @@ interface Email {
   };
 }
 
+type ProfileData = string | number | boolean;
+
 const prisma = new PrismaClient();
 
-// Configure OAuth2 client
 const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_CID,
   process.env.GOOGLE_CS,
@@ -37,13 +37,19 @@ const oauth2Client = new OAuth2Client(
 export async function GET(request: NextRequest) {
   try {
     const params = new URL(request.url).searchParams;
+
     const integrationId = params.get("integrationId");
-    // Get the integration from the database (assuming you want to use an existing integration)
+    const startImport = params.get("startImport");
+
     const integration = await prisma.integration.findFirst({
       where: { id: Number(integrationId) },
     });
 
-    console.log("Integration", integration);
+    if (!startImport || startImport === "false") {
+      return NextResponse.json({
+        message: "Import process not started",
+      });
+    }
 
     if (!integration) {
       return NextResponse.json(
@@ -54,31 +60,71 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const profile = integration.profile as Record<string, ProfileData>;
+
+    if (profile.isComplete) {
+      return NextResponse.json(
+        {
+          error: "Import completed",
+        },
+        { status: 404 }
+      );
+    }
+
     oauth2Client.setCredentials({
       access_token: integration.accessToken,
-      refresh_token: integration.refreshToken || undefined,
+      refresh_token: integration.refreshToken ?? undefined,
     });
 
     const gmail = google.gmail({ version: "v1", auth: oauth2Client });
 
-    const response = await gmail.users.messages.list({
+    const messages = [];
+
+    let response = await gmail.users.messages.list({
       userId: "me",
       maxResults: 500,
     });
 
-    const messages = response.data.messages || [];
+    if (response.data.messages) {
+      messages.push(...response.data.messages);
+    }
+
+    while (response.data.nextPageToken) {
+      response = await gmail.users.messages.list({
+        userId: "me",
+        maxResults: 500,
+        pageToken: response.data.nextPageToken,
+      });
+
+      if (response.data.messages) {
+        messages.push(...response.data.messages);
+      }
+    }
 
     const importJob = await prisma.integration.update({
       where: { id: integration.id },
       data: {
         profile: {
+          ...profile,
           lastImportedAt: new Date(),
           totalEmailsToImport: messages.length,
         },
       },
     });
 
-    importEmailsInBackground(integration.id, messages);
+    const profileData = importJob.profile as Record<string, ProfileData>;
+    if (profileData.importedEmailCount) {
+      importEmailsInBackground(
+        integration.id,
+        messages.slice(
+          profileData.importedEmailCount as number,
+          messages.length
+        ),
+        profileData.importedEmailCount as number
+      );
+    } else {
+      importEmailsInBackground(integration.id, messages);
+    }
 
     return NextResponse.json({
       jobId: importJob.id,
@@ -113,11 +159,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const profile = integration.profile as Record<
-      string,
-      string | number | boolean
-    >;
-    console.log("PROFILE : ", profile);
+    const profile = integration.profile as Record<string, ProfileData>;
+
+    if (!profile?.totalEmailsToImport) {
+      return NextResponse.json({
+        message: "Import not started",
+      });
+    }
 
     return NextResponse.json({
       integrationId: integration.id,
@@ -138,11 +186,18 @@ export async function POST(request: NextRequest) {
 
 async function importEmailsInBackground(
   integrationId: number,
-  messages: gmail_v1.Schema$Message[]
+  messages: gmail_v1.Schema$Message[],
+  lastImportedCount?: number
 ) {
-  const integration = await prisma.integration.findUnique({
+  let integration = await prisma.integration.findUnique({
     where: { id: integrationId },
   });
+
+  const profile = integration?.profile as Record<string, ProfileData>;
+
+  if (profile?.shouldImportStart) {
+    console.error("Import process should not be started");
+  }
 
   if (!integration) {
     console.error("Integration not found");
@@ -151,13 +206,13 @@ async function importEmailsInBackground(
 
   oauth2Client.setCredentials({
     access_token: integration.accessToken,
-    refresh_token: integration.refreshToken || undefined,
+    refresh_token: integration.refreshToken ?? undefined,
   });
 
   const gmail = google.gmail({ version: "v1", auth: oauth2Client });
 
   try {
-    let importedCount = 0;
+    let importedCount = lastImportedCount ?? 0;
 
     for (const message of messages) {
       try {
@@ -165,13 +220,13 @@ async function importEmailsInBackground(
           where: { id: integrationId },
         });
 
-        const profile = updatedIntegration?.profile as Record<
+        let profile = updatedIntegration?.profile as Record<
           string,
-          string | number | boolean
+          ProfileData
         >;
         if (profile?.isImportCanceled) {
           console.log(
-            `Import process canceled for integration ID: ${integrationId}`
+            `Import process canceled for integration : ${integrationId}`
           );
           return;
         }
@@ -213,13 +268,15 @@ async function importEmailsInBackground(
 
         importedCount++;
 
-        await prisma.integration.update({
+        profile = integration?.profile as Record<string, ProfileData>;
+        integration = await prisma.integration.update({
           where: { id: integrationId },
           data: {
             profile: {
               ...profile,
               importedEmailCount: importedCount,
               importComplete: importedCount === messages.length,
+              isImportProcessing: true,
             },
           },
         });
@@ -227,13 +284,18 @@ async function importEmailsInBackground(
         console.error(`Failed to import email ${message.id}:`, emailError);
       }
     }
-
+    const profile = integration?.profile as Record<
+      string,
+      string | number | boolean
+    >;
     await prisma.integration.update({
       where: { id: integrationId },
       data: {
         profile: {
+          ...profile,
           importComplete: true,
           lastImportCompletedAt: new Date(),
+          isImportProcessing: false,
         },
       },
     });
@@ -264,10 +326,20 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    const integration = await prisma.integration.findUnique({
+      where: { id: Number(integrationId) },
+    });
+
+    const profile = integration?.profile as Record<
+      string,
+      string | number | boolean
+    >;
+
     await prisma.integration.update({
       where: { id: Number(integrationId) },
       data: {
         profile: {
+          ...profile,
           isImportCanceled: true,
         },
       },

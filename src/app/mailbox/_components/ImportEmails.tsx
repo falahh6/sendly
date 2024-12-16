@@ -14,16 +14,18 @@ import {
 export const ImportEmails = ({
   integrationId,
   type,
+  integrationProfiles,
 }: {
   integrationId: string;
   type?: "nav" | "normal";
+  integrationProfiles?: Record<string, string | number | boolean>;
 }) => {
   const [importStatus, setImportStatus] = useState<{
     totalEmails: number;
     importedCount: number;
     isComplete: boolean;
   }>({
-    totalEmails: 0,
+    totalEmails: 10,
     importedCount: 0,
     isComplete: false,
   });
@@ -31,11 +33,11 @@ export const ImportEmails = ({
 
   const [importLoading, setImportLoading] = useState(false);
 
-  const startImport = async () => {
+  const startImport = async (startImport?: boolean) => {
     setImportLoading(true);
     try {
       const response = await fetch(
-        `/api/integrations/mails/import?integrationId=${integrationId}`,
+        `/api/integrations/mails/import?integrationId=${integrationId}&startImport=${startImport}`,
         { method: "GET" }
       );
       const { totalEmails } = await response.json();
@@ -45,37 +47,11 @@ export const ImportEmails = ({
         totalEmails,
       }));
 
-      if (!stopped) return pollImportProgress(Number(integrationId));
+      if (!stopped) return importProgressEvent(); //pollImportProgress(Number(integrationId));
     } catch (error) {
       console.error("Failed to start Gmail import:", error);
     } finally {
       setImportLoading(false);
-    }
-  };
-
-  const pollImportProgress = async (id: number) => {
-    try {
-      const response = await fetch(`/api/integrations/mails/import`, {
-        method: "POST",
-        body: JSON.stringify({ integrationId: id }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      const { totalEmails, importedCount, isComplete } = await response.json();
-
-      setImportStatus({
-        totalEmails,
-        importedCount,
-        isComplete,
-      });
-
-      if (!isComplete && !totalEmails) {
-        setTimeout(() => pollImportProgress(id), 3000);
-      }
-    } catch (error) {
-      console.error("Failed to fetch import progress:", error);
     }
   };
 
@@ -89,13 +65,12 @@ export const ImportEmails = ({
   const stopImport = async () => {
     setStopped(true);
     try {
-      await fetch(`/api/integrations/mails/import`, {
-        method: "DELETE",
-        body: JSON.stringify({ integrationId }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      await fetch(
+        `/api/integrations/mails/import?integrationId=${integrationId}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       setImportStatus((prev) => ({
         ...prev,
@@ -106,14 +81,45 @@ export const ImportEmails = ({
     }
   };
 
+  const importProgressEvent = () => {
+    const eventSource = new EventSource(
+      `/api/events/email-import?integrationId=${integrationId}`
+    );
+
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      const { importedCount, totalEmails, isComplete } = data;
+
+      if (isComplete) {
+        console.log("Import complete!");
+        eventSource.close();
+      } else {
+        setImportStatus({
+          totalEmails,
+          importedCount,
+          isComplete,
+        });
+      }
+    };
+
+    eventSource.onerror = () => {
+      console.error("Failed to receive updates");
+      eventSource.close();
+    };
+  };
+
+  let init = false;
   useEffect(() => {
-    if (type === "nav") {
-      pollImportProgress(Number(integrationId));
+    if (type === "nav" && !init) {
+      if (integrationProfiles?.isImportProcessing) {
+        importProgressEvent();
+      }
+      init = true;
     }
-  }, [integrationId]);
+  }, []);
 
   if (type === "nav") {
-    if (importStatus.isComplete) return null;
+    if (importStatus.isComplete || importStatus.totalEmails === 0) return null;
     return (
       <DropdownMenu>
         <DropdownMenuTrigger>
@@ -122,7 +128,7 @@ export const ImportEmails = ({
             size={"sm"}
             className="rounded-xl bg-green-100 border-green-300 text-green-500 hover:bg-green-50 hover:text-green-500 "
           >
-            Import Emails
+            Email imports
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -132,10 +138,14 @@ export const ImportEmails = ({
           <div className="space-y-2">
             <h3 className="text-sm mb-2">Import in progress</h3>
           </div>
-          <div className="p-2 bg-neutral-100 w-full rounded-lg">
+          <div className="p-2 bg-neutral-100 w-full rounded-lg text-xs font-[550]">
+            <div className="py-2 flex flex-row justify-between ">
+              <p>Progress</p>
+              <p>{calculateProgress()}%</p>
+            </div>
             <Progress value={calculateProgress()} />
-            <div className="p-1 pt-2 flex flex-row justify-between">
-              <p className="text-xs mt-2">
+            <div className="pt-2 flex flex-row justify-between">
+              <p className=" mt-2">
                 Imported {importStatus.importedCount} of{" "}
                 {importStatus.totalEmails}
               </p>
@@ -143,7 +153,7 @@ export const ImportEmails = ({
                 variant={"destructive"}
                 size={"sm"}
                 onClick={stopImport}
-                className="px-2 py-1 text-xs h-fit bg-red-100 hover:bg-red-200 text-red-500 rounded-lg font-semibold"
+                className="px-2 py-1 h-fit bg-red-100 hover:bg-red-200 text-red-500 rounded-lg font-semibold"
               >
                 Stop
               </Button>
@@ -166,10 +176,14 @@ export const ImportEmails = ({
         </div>
         <div className="mt-2 flex flex-row gap-2 items-center w-full">
           {importStatus.totalEmails !== 0 && !importStatus.isComplete ? (
-            <div className="p-2 bg-neutral-100 w-full rounded-lg">
+            <div className="p-2 px-4 bg-neutral-100 w-full rounded-lg text-xs font-[550]">
+              <div className="py-2 flex flex-row justify-between ">
+                <p>Progress</p>
+                <p>{calculateProgress()}%</p>
+              </div>
               <Progress value={calculateProgress()} />
-              <div className="p-1 pt-2 flex flex-row justify-between">
-                <p className="text-xs mt-2">
+              <div className="pt-2 flex flex-row justify-between">
+                <p className=" mt-2">
                   Imported {importStatus.importedCount} of{" "}
                   {importStatus.totalEmails}
                 </p>
@@ -188,7 +202,7 @@ export const ImportEmails = ({
               size={"sm"}
               variant={"outline"}
               className="text-sm rounded-xl"
-              onClick={startImport}
+              onClick={() => startImport(true)}
               disabled={importLoading}
             >
               {importLoading && <Loader className="h-4 w-4 animate-spin" />}{" "}

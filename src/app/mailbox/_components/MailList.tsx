@@ -25,9 +25,16 @@ export const MailList = ({ emails }: { emails: ParsedEmail[] }) => {
       <div className="h-full overflow-y-scroll max-h-[60vh] overflow-x-hidden">
         {emails.map((email) => (
           <div
+            role="button"
+            tabIndex={0}
             key={email.id}
             className="text-sm border-b w-full p-2 hover:bg-gray-100 hover:cursor-pointer"
             onClick={() => selectMailHandler(email.id)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                selectMailHandler(email.id);
+              }
+            }}
           >
             <div className="p-2 flex flex-row gap-2">
               <div>
