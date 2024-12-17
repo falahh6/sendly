@@ -1,62 +1,69 @@
 const { PrismaClient } = require("@prisma/client");
-const { v4: uuidv4 } = require("uuid");
+const { promises: fs } = require("fs");
+const path = require("path");
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // Generate a UUID for the user
-  const userId = uuidv4();
+  const filePath = path.join(process.cwd(), "emailDetails.json");
 
-  // Create a User
-  const user = await prisma.user.create({
-    data: {
-      id: userId, // Use the generated UUID
-      name: "John Doe",
-      email: "john.doe@example.com",
-      password: "securepassword", // Make sure to hash passwords in production
-      emailVerified: true,
-      authToken: "exampleAuthToken123",
-      verificationToken: "exampleVerificationToken123",
+  const emailDetailsRaw = await fs.readFile(filePath, "utf-8");
+  const emailDetails = JSON.parse(emailDetailsRaw).slice(0, 5);
+  console.log("EMAIL DETAILS (length): ", emailDetails.length);
+
+  const integrations = await prisma.integration.findUnique({
+    where: {
+      email: "falahsss900@gmail.com",
     },
   });
 
-  console.log("User created:", user);
+  if (!integrations) {
+    throw new Error("Integration not found for the given email.");
+  }
 
-  // Create Google Integration
-  const googleIntegration = await prisma.integration.create({
-    data: {
-      name: "Google",
-      profile: {
-        name: "John Doe",
-        email: "john.doe@gmail.com",
-        id: "google123",
+  console.log("Integrations:", integrations);
+
+  for (const email of emailDetails) {
+    await prisma.mail.create({
+      data: {
+        from: email.from,
+        to: email.to,
+        cc: email.cc,
+        bcc: email.bcc,
+        date: email.date ? new Date(email.date) : null,
+        subject: email.subject,
+        messageId: email.messageId,
+        replyTo: email.replyTo,
+        snippet: email.snippet,
+        threadId: email.threadId,
+        plainTextMessage: email.plainTextMessage,
+        htmlMessage: email.htmlMessage,
+        labelIds: email.labelIds,
+        priorityGrade: email.priorityGrade,
+        categorization: email.categorization
+          ? {
+              primaryCategory: email.categorization.primaryCategory,
+              subCategory: email.categorization.subCategory,
+              confidence: email.categorization.confidence,
+            }
+          : undefined,
+        nlpEntities: email.nlpEntities,
+        sentimentScore: email.sentimentScore,
+        privacyCompliant: email.privacyCompliant,
+        category: email.category,
+        integrationId: integrations.id,
+        attachments: {
+          create: email.attachments.map((attachment: any) => ({
+            filename: attachment.filename,
+            mimeType: attachment.mimeType,
+            data: attachment.data,
+          })),
+        },
       },
-      accessToken: "googleAccessToken123",
-      refreshToken: "googleRefreshToken123",
-      provider: "Google",
-      userId: user.id,
-    },
-  });
+    });
+  }
 
-  console.log("Google Integration created:", googleIntegration);
-
-  // Create Outlook Integration
-  const outlookIntegration = await prisma.integration.create({
-    data: {
-      name: "Outlook",
-      profile: {
-        name: "John Doe",
-        email: "john.doe@outlook.com",
-        id: "outlook123",
-      },
-      accessToken: "outlookAccessToken123",
-      refreshToken: "outlookRefreshToken123",
-      provider: "Outlook",
-      userId: user.id,
-    },
-  });
-
-  console.log("Outlook Integration created:", outlookIntegration);
+  console.log("Seeding completed successfully.");
 }
 
 // Run the seeding script

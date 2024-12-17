@@ -11,32 +11,26 @@ const oAuth2Client = new google.auth.OAuth2({
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const userAccessToken = url.searchParams.get("userAccessToken");
+  const email = url.searchParams.get("email");
 
   console.log("userAccessToken : ", userAccessToken);
 
   const authUrl = oAuth2Client.generateAuthUrl({
     access_type: "offline",
-    scope: [
-      "https://www.googleapis.com/auth/gmail.readonly", // Read-only access to emails
-      "https://www.googleapis.com/auth/gmail.send", // To send emails
-      "https://www.googleapis.com/auth/gmail.modify",
-      "https://www.googleapis.com/auth/gmail.compose",
-      "https://www.googleapis.com/auth/gmail.metadata",
-    ],
+    scope: ["https://mail.google.com/"], //all remail access
     prompt: "consent",
+    login_hint: email ?? "",
   });
 
-  // Create the response object
   const response = NextResponse.redirect(authUrl);
 
-  // If there is a userAccessToken, set it in the cookies
   if (userAccessToken) {
     response.headers.set(
       "Set-Cookie",
       serialize("userAccessToken", userAccessToken, {
         path: "/",
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // Only set secure cookies in production
+        secure: process.env.NODE_ENV === "production",
       })
     );
   }

@@ -3,7 +3,6 @@ import prisma from "@/lib/prisma";
 
 export const GET = async (req: NextRequest) => {
   try {
-    // Retrieve the auth token from the request headers
     const authToken = req.headers.get("auth");
 
     if (!authToken) {
@@ -13,7 +12,6 @@ export const GET = async (req: NextRequest) => {
       );
     }
 
-    // Find the user by auth token
     const user = await prisma.user.findFirst({
       where: {
         authToken,
@@ -24,7 +22,6 @@ export const GET = async (req: NextRequest) => {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Fetch all integrations for the user
     const integrations = await prisma.integration.findMany({
       where: {
         userId: user.id,

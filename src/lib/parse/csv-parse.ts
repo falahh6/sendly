@@ -6,7 +6,7 @@ export const parseCSV = (
 ): Promise<Record<string, string>[]> => {
   return new Promise((resolve, reject) => {
     Papa.parse(csvFile, {
-      header: true, // Parse the first row as column names
+      header: true,
       skipEmptyLines: true,
       complete: (results) => {
         const data = results.data as Record<string, string>[];
