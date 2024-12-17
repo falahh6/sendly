@@ -1,8 +1,8 @@
 import { Dot, Github, Twitter } from "lucide-react";
 import Link from "next/link";
 import React from "react";
-import ContinueWithGoogle from "@/components/auth/google";
-import Logout from "@/components/auth/Logout";
+// import ContinueWithGoogle from "@/components/auth/google";
+// import Logout from "@/components/auth/Logout";
 import { Button } from "@/components/ui/button";
 import { getServerSession } from "next-auth";
 import { authOptions } from "./api/auth/[...nextauth]/authOptions";
@@ -30,8 +30,8 @@ export default async function Home() {
 
   return (
     <main className="bg-white dark:bg-neutral-700 text-neutral-500 dark:text-neutral-300">
-      <div className="bg-neutral-100 dark:bg-neutral-800 p-10 h-[50vh] flex flex-col md:flex-row md:items-end justify-between">
-        <div>
+      <div className="bg-neutral-100 dark:bg-neutral-800 p-10 h-[60vh] lg:h-[50vh] flex flex-col md:flex-row md:items-end justify-between">
+        <div className="max-sm:mt-10">
           <h1 className="font-semibold">SENDLY</h1>
           <p>Sendly is the new way you work with emails.</p>
         </div>
@@ -39,7 +39,12 @@ export default async function Home() {
           <h3 className="text-sm md:text-lg font-bold">What I am aiming</h3>
           {[
             {
-              title: " Intelligent Categorization",
+              title: "Unified Email Access",
+              description:
+                "access all your emails from different providers in one place.",
+            },
+            {
+              title: "Intelligent Categorization",
               description:
                 "Auto-sorts emails into actionable categories like Work, Personal, Promotions.",
             },
@@ -60,26 +65,26 @@ export default async function Home() {
           ))}
         </div>
       </div>
-      <div className="h-[30vh] p-10 ">
+      <div className="h-[30vh] max-sm:h-[20vh] p-10 ">
         <div className="flex flex-col md:flex-row gap-4 justify-between">
           <div className="space-x-3">
             <Button
               disabled={!session?.accessToken}
               asChild={(session && session?.accessToken.length > 0) || false}
-              className="w-full xl:w-auto"
+              className="w-full xl:w-auto rounded-xl"
             >
               <Link href={"/playground"}>Payground</Link>
             </Button>
           </div>{" "}
-          <div className="flex flex-row max-sm:w-full items-center gap-4">
+          {/* <div className="flex flex-row max-sm:w-full items-center gap-4">
             <ContinueWithGoogle /> <Logout />
-          </div>
+          </div> */}
         </div>
         <div>
           {session?.user ? (
             <Integrations />
           ) : (
-            <p className="mt-4 text-sm">Login for integrations</p>
+            <>{/* <p className="mt-4 text-sm">Login for integrations</p> */}</>
           )}
         </div>
       </div>

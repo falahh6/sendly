@@ -84,7 +84,7 @@ const MailboxLayout = async ({
         <div className="bg-gray-100 w-[40%] border text-center rounded-md p-2 flex flex-row items-center justify-center">
           Search or Quick actions
         </div>
-        <div>profile </div>
+        <div></div>
       </div>
       <div className="flex flex-row items-center justify-between h-[7vh] rounded-lg w-full">
         <div>
