@@ -126,7 +126,7 @@ const getAllCategorizedThreadIds = (): Set<string> => {
 
   for (const category in categorizedEmails) {
     categorizedEmails[category].forEach((email) => {
-      threadIdSet.add(email.id); // Collect unique thread IDs
+      threadIdSet.add(email.id);
     });
   }
 

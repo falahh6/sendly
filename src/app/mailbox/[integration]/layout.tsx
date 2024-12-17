@@ -108,14 +108,14 @@ const MailboxLayout = async ({
       </div>
       <div className="h-[78vh] w-full">
         <ResizablePanelGroup direction="horizontal" className="space-x-1">
-          <ResizablePanel
+          {/* <ResizablePanel
             className="p-4 bg-neutral-50 rounded-lg border"
             defaultSize={15}
             minSize={5}
             maxSize={15}
           >
             Tools . sidebar
-          </ResizablePanel>
+          </ResizablePanel> */}
           <ResizableHandle className="bg-transparent dark:bg-transparent" />
           <ResizablePanel
             className="bg-white rounded-lg border"

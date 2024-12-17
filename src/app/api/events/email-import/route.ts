@@ -21,10 +21,13 @@ export async function GET(request: NextRequest) {
   });
 
   const abortController = new AbortController();
+  let streamClosed = false;
 
   const stream = new ReadableStream({
     async start(controller) {
       const interval = setInterval(async () => {
+        if (streamClosed) return;
+
         try {
           const integration = await prisma.integration.findUnique({
             where: { id: Number(integrationId) },
@@ -34,8 +37,7 @@ export async function GET(request: NextRequest) {
             controller.enqueue(
               `data: ${JSON.stringify({ error: "Integration not found" })}\n\n`
             );
-            controller.close();
-            clearInterval(interval);
+            cleanupStream(controller, interval);
             return;
           }
 
@@ -43,22 +45,32 @@ export async function GET(request: NextRequest) {
             string,
             string | number | boolean
           >;
+
           const importedCount = profile.importedEmailCount || 0;
           const totalEmails = profile.totalEmailsToImport || 0;
 
-          if (profile.importComplete) {
-            if (controller.desiredSize !== null) {
-              controller.enqueue(
-                `data: ${JSON.stringify({
-                  importedCount,
-                  totalEmails,
-                  isComplete: true,
-                })}\n\n`
-              );
-              controller.close();
-            }
+          if (profile.isImportCanceled) {
+            controller.enqueue(
+              `data: ${JSON.stringify({
+                importedCount,
+                totalEmails,
+                isComplete: true,
+                isCancelled: true,
+              })}\n\n`
+            );
+            cleanupStream(controller, interval);
+            return;
+          }
 
-            clearInterval(interval);
+          if (profile.importComplete) {
+            controller.enqueue(
+              `data: ${JSON.stringify({
+                importedCount,
+                totalEmails,
+                isComplete: true,
+              })}\n\n`
+            );
+            cleanupStream(controller, interval);
             return;
           }
 
@@ -71,17 +83,26 @@ export async function GET(request: NextRequest) {
           );
         } catch (error) {
           controller.enqueue(`data: ${JSON.stringify({ error: error })}\n\n`);
-          controller.close();
-          clearInterval(interval);
+          cleanupStream(controller, interval);
         }
       }, 1000);
 
       abortController.signal.addEventListener("abort", () => {
-        controller.close();
-        clearInterval(interval);
+        cleanupStream(controller, interval);
       });
     },
   });
 
   return new NextResponse(stream, { headers });
+
+  function cleanupStream(
+    controller: ReadableStreamDefaultController<Uint8Array>,
+    interval: NodeJS.Timeout
+  ) {
+    if (!streamClosed) {
+      clearInterval(interval);
+      streamClosed = true;
+      controller.close();
+    }
+  }
 }

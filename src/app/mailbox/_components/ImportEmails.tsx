@@ -24,12 +24,14 @@ export const ImportEmails = ({
     totalEmails: number;
     importedCount: number;
     isComplete: boolean;
+    importCancelled?: boolean;
   }>({
-    totalEmails: 10,
+    totalEmails: 0,
     importedCount: 0,
     isComplete: false,
+    importCancelled: false,
   });
-  const [stopped, setStopped] = useState(false);
+  const [stopped] = useState(false);
 
   const [importLoading, setImportLoading] = useState(false);
 
@@ -58,28 +60,28 @@ export const ImportEmails = ({
   const calculateProgress = () => {
     if (importStatus.totalEmails === 0) return 0;
     return Math.round(
-      (importStatus.importedCount / importStatus.totalEmails) * 100
+      ((importStatus.importedCount + 1) / importStatus.totalEmails) * 100
     );
   };
 
-  const stopImport = async () => {
-    setStopped(true);
-    try {
-      await fetch(
-        `/api/integrations/mails/import?integrationId=${integrationId}`,
-        {
-          method: "DELETE",
-        }
-      );
+  // const stopImport = async () => {
+  //   setStopped(true);
+  //   try {
+  //     await fetch(
+  //       `/api/integrations/mails/import?integrationId=${integrationId}`,
+  //       {
+  //         method: "DELETE",
+  //       }
+  //     );
 
-      setImportStatus((prev) => ({
-        ...prev,
-        isComplete: true,
-      }));
-    } catch (error) {
-      console.error("Failed to stop Gmail import:", error);
-    }
-  };
+  //     setImportStatus((prev) => ({
+  //       ...prev,
+  //       isComplete: true,
+  //     }));
+  //   } catch (error) {
+  //     console.error("Failed to stop Gmail import:", error);
+  //   }
+  // };
 
   const importProgressEvent = () => {
     const eventSource = new EventSource(
@@ -88,17 +90,27 @@ export const ImportEmails = ({
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      const { importedCount, totalEmails, isComplete } = data;
 
-      if (isComplete) {
+      if (data.error) {
+        console.error(data.error);
+        eventSource.close();
+      }
+
+      if (data.isComplete) {
         console.log("Import complete!");
         eventSource.close();
       } else {
         setImportStatus({
-          totalEmails,
-          importedCount,
-          isComplete,
+          totalEmails: data.totalEmails,
+          importedCount: data.importedCount,
+          isComplete: data.isComplete,
+          importCancelled: data.isCancelled,
         });
+
+        if (data.isCancelled) {
+          console.log("Import cancelled! DATA : ", data);
+          eventSource.close();
+        }
       }
     };
 
@@ -119,7 +131,8 @@ export const ImportEmails = ({
   }, []);
 
   if (type === "nav") {
-    if (importStatus.isComplete || importStatus.totalEmails === 0) return null;
+    if (importStatus.totalEmails === 0) return null;
+
     return (
       <DropdownMenu>
         <DropdownMenuTrigger>
@@ -135,30 +148,38 @@ export const ImportEmails = ({
           side="bottom"
           className="w-80 p-4 mr-4 rounded-xl border text-sm"
         >
-          <div className="space-y-2">
-            <h3 className="text-sm mb-2">Import in progress</h3>
-          </div>
-          <div className="p-2 bg-neutral-100 w-full rounded-lg text-xs font-[550]">
-            <div className="py-2 flex flex-row justify-between ">
-              <p>Progress</p>
-              <p>{calculateProgress()}%</p>
+          {importStatus.importCancelled ? (
+            <div className="space-y-2">
+              <h3 className="text-sm mb-2">Import Cancelled</h3>
             </div>
-            <Progress value={calculateProgress()} />
-            <div className="pt-2 flex flex-row justify-between">
-              <p className=" mt-2">
-                Imported {importStatus.importedCount} of{" "}
-                {importStatus.totalEmails}
-              </p>
-              <Button
-                variant={"destructive"}
-                size={"sm"}
-                onClick={stopImport}
-                className="px-2 py-1 h-fit bg-red-100 hover:bg-red-200 text-red-500 rounded-lg font-semibold"
-              >
-                Stop
-              </Button>
-            </div>
-          </div>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <h3 className="text-sm mb-2">Import in progress</h3>
+              </div>
+              <div className="p-2 bg-neutral-100 w-full rounded-lg text-xs font-[550]">
+                <div className="py-2 flex flex-row justify-between ">
+                  <p>Progress</p>
+                  <p>{calculateProgress()}%</p>
+                </div>
+                <Progress value={calculateProgress()} />
+                <div className="pt-2 flex flex-row justify-between">
+                  <p className=" mt-2">
+                    Imported {importStatus.importedCount} of{" "}
+                    {importStatus.totalEmails}
+                  </p>
+                  {/* <Button
+                    variant={"destructive"}
+                    size={"sm"}
+                    onClick={stopImport}
+                    className="px-2 py-1 h-fit bg-red-100 hover:bg-red-200 text-red-500 rounded-lg font-semibold"
+                  >
+                    Stop
+                  </Button> */}
+                </div>
+              </div>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     );
@@ -184,17 +205,17 @@ export const ImportEmails = ({
               <Progress value={calculateProgress()} />
               <div className="pt-2 flex flex-row justify-between">
                 <p className=" mt-2">
-                  Imported {importStatus.importedCount} of{" "}
+                  Imported {importStatus.importedCount + 1} of{" "}
                   {importStatus.totalEmails}
                 </p>
-                <Button
+                {/* <Button
                   variant={"destructive"}
                   size={"sm"}
                   onClick={stopImport}
                   className="px-2 py-1 h-fit bg-red-100 hover:bg-red-200 text-red-500 rounded-lg font-semibold"
                 >
                   Stop
-                </Button>
+                </Button> */}
               </div>
             </div>
           ) : (

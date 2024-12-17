@@ -224,6 +224,7 @@ async function importEmailsInBackground(
           string,
           ProfileData
         >;
+
         if (profile?.isImportCanceled) {
           console.log(
             `Import process canceled for integration : ${integrationId}`
