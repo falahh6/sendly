@@ -97,8 +97,16 @@ export const ImportEmails = ({
       }
 
       if (data.isComplete) {
+        setImportStatus({
+          totalEmails: data.totalEmails,
+          importedCount: data.importedCount,
+          isComplete: data.isComplete,
+          importCancelled: data.isCancelled,
+        });
         console.log("Import complete!");
         eventSource.close();
+
+        window.location.reload();
       } else {
         setImportStatus({
           totalEmails: data.totalEmails,

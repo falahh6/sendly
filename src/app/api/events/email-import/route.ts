@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/lib/prisma";
 
-const prisma = new PrismaClient();
+export const runtime = "edge";
 
 export async function GET(request: NextRequest) {
   const params = new URL(request.url).searchParams;
@@ -50,37 +50,43 @@ export async function GET(request: NextRequest) {
           const totalEmails = profile.totalEmailsToImport || 0;
 
           if (profile.isImportCanceled) {
-            controller.enqueue(
-              `data: ${JSON.stringify({
-                importedCount,
-                totalEmails,
-                isComplete: true,
-                isCancelled: true,
-              })}\n\n`
-            );
+            if (!streamClosed) {
+              controller.enqueue(
+                `data: ${JSON.stringify({
+                  importedCount,
+                  totalEmails,
+                  isComplete: true,
+                  isCancelled: true,
+                })}\n\n`
+              );
+            }
             cleanupStream(controller, interval);
             return;
           }
 
           if (profile.importComplete) {
-            controller.enqueue(
-              `data: ${JSON.stringify({
-                importedCount,
-                totalEmails,
-                isComplete: true,
-              })}\n\n`
-            );
+            if (!streamClosed) {
+              controller.enqueue(
+                `data: ${JSON.stringify({
+                  importedCount,
+                  totalEmails,
+                  isComplete: true,
+                })}\n\n`
+              );
+            }
             cleanupStream(controller, interval);
             return;
           }
 
-          controller.enqueue(
-            `data: ${JSON.stringify({
-              importedCount,
-              totalEmails,
-              isComplete: false,
-            })}\n\n`
-          );
+          if (!streamClosed) {
+            controller.enqueue(
+              `data: ${JSON.stringify({
+                importedCount,
+                totalEmails,
+                isComplete: false,
+              })}\n\n`
+            );
+          }
         } catch (error) {
           controller.enqueue(`data: ${JSON.stringify({ error: error })}\n\n`);
           cleanupStream(controller, interval);

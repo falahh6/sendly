@@ -3,26 +3,7 @@ import { gmail_v1, google } from "googleapis";
 import { PrismaClient } from "@prisma/client";
 import { OAuth2Client } from "google-auth-library";
 import { parseEmail } from "@/lib/emails/utils";
-
-interface Email {
-  id: string;
-  threadId: string;
-  snippet: string;
-  labelIds: string[];
-  payload: {
-    headers: Array<{ name: string; value: string }>;
-    parts?: Array<{
-      partId: string;
-      mimeType: string;
-      headers: Array<{ name: string; value: string }>;
-      body?: {
-        size: number;
-        data?: string;
-      };
-      filename?: string;
-    }>;
-  };
-}
+import { Email } from "@/lib/types/email";
 
 type ProfileData = string | number | boolean;
 
