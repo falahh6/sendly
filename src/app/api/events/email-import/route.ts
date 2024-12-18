@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime =
   process.env.NODE_ENV === "production" ? "edge" : "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const params = new URL(request.url).searchParams;
