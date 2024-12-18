@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
             return;
           }
 
-          if (streamClosed == false) {
+          if (streamClosed === false) {
             controller.enqueue(
               `data: ${JSON.stringify({
                 importedCount,

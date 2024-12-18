@@ -64,25 +64,6 @@ export const ImportEmails = ({
     );
   };
 
-  // const stopImport = async () => {
-  //   setStopped(true);
-  //   try {
-  //     await fetch(
-  //       `/api/integrations/mails/import?integrationId=${integrationId}`,
-  //       {
-  //         method: "DELETE",
-  //       }
-  //     );
-
-  //     setImportStatus((prev) => ({
-  //       ...prev,
-  //       isComplete: true,
-  //     }));
-  //   } catch (error) {
-  //     console.error("Failed to stop Gmail import:", error);
-  //   }
-  // };
-
   const importProgressEvent = () => {
     const eventSource = new EventSource(
       `/api/events/email-import?integrationId=${integrationId}`

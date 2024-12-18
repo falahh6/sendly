@@ -13,7 +13,7 @@ const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_REDIRECT_URI
 );
 
-const isTesting = true;
+const isTesting = false;
 
 export async function GET(request: NextRequest) {
   try {
