@@ -90,6 +90,7 @@ export const ImportEmails = ({
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
+      console.log("Data from event source: ", data);
 
       if (data.error) {
         console.error(data.error);

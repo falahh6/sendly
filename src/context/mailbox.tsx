@@ -44,7 +44,7 @@ export function MailboxProvider({
     { revalidateOnFocus: false, dedupingInterval: 60000 }
   );
 
-  const integrations = data?.integrations || [];
+  const integrations = useMemo(() => data?.integrations || [], [data]);
 
   const value = useMemo(
     () => ({

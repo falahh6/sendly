@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { gmail_v1, google } from "googleapis";
-import { PrismaClient } from "@prisma/client";
 import { OAuth2Client } from "google-auth-library";
 import { parseEmail } from "@/lib/emails/utils";
 import { Email } from "@/lib/types/email";
+import prisma from "@/lib/prisma";
 
 type ProfileData = string | number | boolean;
-
-const prisma = new PrismaClient();
 
 const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_CID,
   process.env.GOOGLE_CS,
   process.env.GOOGLE_REDIRECT_URI
 );
+
+const isTesting = true;
 
 export async function GET(request: NextRequest) {
   try {
@@ -63,17 +63,17 @@ export async function GET(request: NextRequest) {
 
     let response = await gmail.users.messages.list({
       userId: "me",
-      maxResults: 500,
+      maxResults: isTesting ? 10 : 500,
     });
 
     if (response.data.messages) {
       messages.push(...response.data.messages);
     }
 
-    while (response.data.nextPageToken) {
+    while (response.data.nextPageToken && !isTesting) {
       response = await gmail.users.messages.list({
         userId: "me",
-        maxResults: 500,
+        maxResults: 1,
         pageToken: response.data.nextPageToken,
       });
 

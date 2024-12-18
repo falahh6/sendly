@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "edge";
+export const runtime =
+  process.env.NODE_ENV === "production" ? "edge" : "nodejs";
 
 export async function GET(request: NextRequest) {
   const params = new URL(request.url).searchParams;
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
           const importedCount = profile.importedEmailCount || 0;
           const totalEmails = profile.totalEmailsToImport || 0;
 
-          if (profile.isImportCanceled) {
+          if (profile?.isImportCanceled) {
             if (!streamClosed) {
               controller.enqueue(
                 `data: ${JSON.stringify({
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
             return;
           }
 
-          if (profile.importComplete) {
+          if (profile?.importComplete) {
             if (!streamClosed) {
               controller.enqueue(
                 `data: ${JSON.stringify({
@@ -78,7 +79,7 @@ export async function GET(request: NextRequest) {
             return;
           }
 
-          if (!streamClosed) {
+          if (streamClosed == false) {
             controller.enqueue(
               `data: ${JSON.stringify({
                 importedCount,
