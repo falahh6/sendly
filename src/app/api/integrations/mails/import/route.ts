@@ -229,7 +229,7 @@ async function importEmailsInBackground(
             bcc: parsedEmail.bcc,
             date: parsedEmail.date ? new Date(parsedEmail.date) : undefined,
             subject: parsedEmail.subject,
-            messageId: parsedEmail.messageId,
+            messageId: message.id,
             replyTo: parsedEmail.replyTo,
             snippet: parsedEmail.snippet,
             threadId: parsedEmail.threadId,

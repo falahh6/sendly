@@ -14,7 +14,6 @@ export async function GET(req: NextRequest) {
 
   const cookies = req.cookies;
   const accessToken = cookies.get("userAccessToken")?.value;
-  console.log("Access Token: ", accessToken);
 
   if (!code) {
     return NextResponse.json("Authorization code is missing", { status: 400 });
@@ -25,7 +24,6 @@ export async function GET(req: NextRequest) {
     oAuth2Client.setCredentials(tokens);
     console.log("TOKENS : ", tokens);
 
-    // Fetch User Profile
     const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
     const profile = await gmail.users.getProfile({ userId: "me" });
 
@@ -67,6 +65,15 @@ export async function GET(req: NextRequest) {
           userId: user.id,
         },
       });
+
+      const watchResponse = await gmail.users.watch({
+        userId: "me",
+        requestBody: {
+          topicName: `projects/sendly-444103/topics/new-email`,
+        },
+      });
+
+      console.log("Watch Response: ", watchResponse);
 
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_SITE_URL}/mailbox/${integration.id}?redirect=google`
