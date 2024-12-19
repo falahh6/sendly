@@ -123,7 +123,7 @@ const MailboxLayout = async ({
             minSize={30}
           >
             {emails?.length > 0 ? (
-              <MailList emails={emails} />
+              <MailList emails={emails} integrationId={params.integration} />
             ) : (
               <ImportEmails integrationId={params.integration} />
             )}

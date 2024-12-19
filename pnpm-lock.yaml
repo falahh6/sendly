@@ -74,6 +74,12 @@ importers:
       papaparse:
         specifier: ^5.4.1
         version: 5.4.1
+      pusher:
+        specifier: ^5.2.0
+        version: 5.2.0
+      pusher-js:
+        specifier: 8.4.0-rc2
+        version: 8.4.0-rc2
       react:
         specifier: ^18
         version: 18.3.1
@@ -1233,6 +1239,9 @@ packages:
   '@types/keyv@3.1.4':
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
 
+  '@types/node-fetch@2.6.12':
+    resolution: {integrity: sha512-8nneRWKCg3rMtF69nLQJnOYUcbafYeFSjqkw3jCRLsqkWFlHaoQrr5mXmofFGOx3DKn7UfmBMyov8ySvLRVldA==}
+
   '@types/node@20.17.8':
     resolution: {integrity: sha512-ahz2g6/oqbKalW9sPv6L2iRbhLnojxjYWspAqhjvqSWBgGebEJT5GvRmk0QXPj3sbC6rU0GTQjPLQkmR8CObvA==}
 
@@ -2083,6 +2092,10 @@ packages:
     resolution: {integrity: sha512-Y1JXKrfykRJGdlDwdKlLpLyMIiWqWvuSd17TvZk68PLAOGOoF4Xyav1z0Xhoi+gCYjZVeC5SI+hYFOfvXmGRCA==}
     engines: {node: '>= 0.4'}
 
+  is-base64@1.1.0:
+    resolution: {integrity: sha512-Nlhg7Z2dVC4/PTvIFkgVVNvPHSO2eR/Yd0XzhGiXCXEvWnptXlXa/clQ8aePPiMuxEGcWfzWbGw2Fe3d+Y3v1g==}
+    hasBin: true
+
   is-bigint@1.0.4:
     resolution: {integrity: sha512-zB9CruMamjym81i2JZ3UMn54PKGsQzsJeo6xvN3HJJ4CAsQNB6iRutp2To77OfCNuoxspsIhzaPoO1zyCEhFOg==}
 
@@ -2621,6 +2634,13 @@ packages:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
 
+  pusher-js@8.4.0-rc2:
+    resolution: {integrity: sha512-d87GjOEEl9QgO5BWmViSqW0LOzPvybvX6WA9zLUstNdB57jVJuR27zHkRnrav2a3+zAMlHbP2Og8wug+rG8T+g==}
+
+  pusher@5.2.0:
+    resolution: {integrity: sha512-F6LNiZyJsIkoHLz+YurjKZ1HH8V1/cMggn4k97kihjP3uTvm0P4mZzSFeHOWIy+PlJ2VInJBhUFJBYLsFR5cjg==}
+    engines: {node: '>= 4.0.0'}
+
   qs@6.11.2:
     resolution: {integrity: sha512-tDNIz22aBzCDxLtVH++VnTfzxlfeK5CbqohpSqpJgj1Wg/cQbStNAz3NuqCs5vV+pjBsK4x4pN9HlVh7rcYRiA==}
     engines: {node: '>=0.6'}
@@ -2971,6 +2991,12 @@ packages:
 
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
+
+  tweetnacl-util@0.15.1:
+    resolution: {integrity: sha512-RKJBIj8lySrShN4w6i/BonWp2Z/uxwC3h4y7xsRrpP59ZboCd0GpEVsOnMDYLMmKBpYhb5TgHzZXy7wTfYFBRw==}
+
+  tweetnacl@1.0.3:
+    resolution: {integrity: sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==}
 
   type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
@@ -4637,6 +4663,11 @@ snapshots:
     dependencies:
       '@types/node': 20.17.8
 
+  '@types/node-fetch@2.6.12':
+    dependencies:
+      '@types/node': 20.17.8
+      form-data: 4.0.1
+
   '@types/node@20.17.8':
     dependencies:
       undici-types: 6.19.8
@@ -5739,6 +5770,8 @@ snapshots:
     dependencies:
       has-tostringtag: 1.0.2
 
+  is-base64@1.1.0: {}
+
   is-bigint@1.0.4:
     dependencies:
       has-bigints: 1.0.2
@@ -6235,6 +6268,21 @@ snapshots:
 
   punycode@2.3.1: {}
 
+  pusher-js@8.4.0-rc2:
+    dependencies:
+      tweetnacl: 1.0.3
+
+  pusher@5.2.0:
+    dependencies:
+      '@types/node-fetch': 2.6.12
+      abort-controller: 3.0.0
+      is-base64: 1.1.0
+      node-fetch: 2.7.0
+      tweetnacl: 1.0.3
+      tweetnacl-util: 0.15.1
+    transitivePeerDependencies:
+      - encoding
+
   qs@6.11.2:
     dependencies:
       side-channel: 1.0.6
@@ -6626,6 +6674,10 @@ snapshots:
   tslib@1.14.1: {}
 
   tslib@2.8.1: {}
+
+  tweetnacl-util@0.15.1: {}
+
+  tweetnacl@1.0.3: {}
 
   type-check@0.4.0:
     dependencies:

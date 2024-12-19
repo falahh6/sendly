@@ -3,17 +3,24 @@ import { google } from "googleapis";
 import { parseEmail } from "@/lib/emails/utils";
 import { Email } from "@/lib/types/email";
 import prisma from "@/lib/prisma";
+import Pusher from "pusher";
 
 export async function POST(request: Request) {
   const body = await request.json();
-
   console.log("Body: ", body);
 
   const decodedData = JSON.parse(
     Buffer.from(body.message.data, "base64").toString("utf-8")
   );
-
   console.log("Decoded Data: ", decodedData);
+
+  const pusher = new Pusher({
+    appId: process.env.PUSHER_APP_ID!,
+    key: process.env.NEXT_PUBLIC_PUSHER_KEY!,
+    secret: process.env.PUSHER_SECRET!,
+    cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+    useTLS: true,
+  });
 
   try {
     if (!decodedData.emailAddress || !decodedData.historyId) {
@@ -55,8 +62,6 @@ export async function POST(request: Request) {
       maxResults: 4,
     });
 
-    console.log("latest message response :  ", latestMessages);
-
     const messageIds = await prisma.mail.findMany({
       where: {
         integrationId: integration.id,
@@ -66,8 +71,12 @@ export async function POST(request: Request) {
       },
     });
 
+    const previousMessageIdsList = messageIds.flatMap((m) => m.messageId);
+
     for (const message of latestMessages.data.messages ?? []) {
-      if (!messageIds.flatMap((m) => m.messageId).includes(message.id!)) {
+      if (!previousMessageIdsList.includes(message.id!)) {
+        console.log("Message ID: ", message.id);
+
         const emailResponse = await gmail.users.messages.get({
           userId: "me",
           id: message.id!,
@@ -108,8 +117,15 @@ export async function POST(request: Request) {
           " || ",
           parsedEmail.subject
         );
+
+        await pusher.trigger("gmail-channel", "new-email", {
+          body: "New email received",
+          messageId: message.id,
+        });
       }
     }
+
+    console.log("NONE API");
 
     return NextResponse.json(
       { success: true },
