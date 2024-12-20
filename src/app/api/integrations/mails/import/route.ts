@@ -64,6 +64,8 @@ export async function GET(request: NextRequest) {
     let response = await gmail.users.messages.list({
       userId: "me",
       maxResults: isTesting ? 10 : 500,
+      q : "",
+      includeSpamTrash: true,
     });
 
     if (response.data.messages) {

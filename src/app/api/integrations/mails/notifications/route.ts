@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { google } from "googleapis";
+import { gmail_v1, google } from "googleapis";
 import { parseEmail } from "@/lib/emails/utils";
 import { Email } from "@/lib/types/email";
 import prisma from "@/lib/prisma";
 import Pusher from "pusher";
+import { Integration } from "@prisma/client";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -12,7 +13,6 @@ export async function POST(request: Request) {
   const decodedData = JSON.parse(
     Buffer.from(body.message.data, "base64").toString("utf-8")
   );
-  console.log("Decoded Data: ", decodedData);
 
   const pusher = new Pusher({
     appId: process.env.PUSHER_APP_ID!,
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log("Integration: ", integration);
+    const profileData = integration?.profile as Record<string, string | number | boolean>;
 
     if (!integration) {
       return NextResponse.json(
@@ -45,87 +45,47 @@ export async function POST(request: Request) {
       );
     }
 
-    const oauth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CID,
-      process.env.GOOGLE_CS
-    );
-
-    oauth2Client.setCredentials({
-      access_token: integration.accessToken,
-      refresh_token: integration.refreshToken,
-    });
-
+    const oauth2Client = getOAuthClient(integration);
     const gmail = google.gmail({ version: "v1", auth: oauth2Client });
 
-    const latestMessages = await gmail.users.messages.list({
+    const historyData = await gmail.users.history.list({
       userId: "me",
-      maxResults: 4,
-    });
+      startHistoryId: profileData.historyId as string,
+    })
 
-    const messageIds = await prisma.mail.findMany({
-      where: {
-        integrationId: integration.id,
-      },
-      select: {
-        messageId: true,
-      },
-    });
+    const historyRecords = historyData.data.history || [];
 
-    const previousMessageIdsList = messageIds.flatMap((m) => m.messageId);
-
-    for (const message of latestMessages.data.messages ?? []) {
-      if (!previousMessageIdsList.includes(message.id!)) {
-        console.log("Message ID: ", message.id);
-
-        const emailResponse = await gmail.users.messages.get({
-          userId: "me",
-          id: message.id!,
-        });
-
-        const parsedEmail = parseEmail(emailResponse.data as Email);
-
-        await prisma.mail.create({
-          data: {
-            from: parsedEmail.from,
-            to: parsedEmail.to,
-            cc: parsedEmail.cc,
-            bcc: parsedEmail.bcc,
-            date: parsedEmail.date ? new Date(parsedEmail.date) : undefined,
-            subject: parsedEmail.subject,
-            messageId: message.id,
-            replyTo: parsedEmail.replyTo,
-            snippet: parsedEmail.snippet,
-            threadId: parsedEmail.threadId,
-            plainTextMessage: parsedEmail.plainTextMessage,
-            htmlMessage: parsedEmail.htmlMessage,
-            labelIds: parsedEmail.labelIds,
-            priorityGrade: parsedEmail.priorityGrade,
-            integrationId: integration.id,
-            attachments: {
-              create: parsedEmail.attachments.map((attachment) => ({
-                filename: attachment.filename,
-                mimeType: attachment.mimeType,
-                data: attachment.data,
-              })),
-            },
-          },
-        });
-
-        console.log(
-          "Email created -> ",
-          parsedEmail.from,
-          " || ",
-          parsedEmail.subject
-        );
-
-        await pusher.trigger("gmail-channel", "new-email", {
-          body: "New email received",
-          messageId: message.id,
-        });
+    for (const record of historyRecords) {
+      if (record.messagesAdded) {
+        for (const msg of record.messagesAdded) {
+          if (msg.message?.id) await handleNewMessage(gmail, integration.id, msg.message.id);
+        }
+      }
+  
+      if (record.messagesDeleted) {
+        for (const msg of record.messagesDeleted) {
+          if (msg.message?.id) await handleDeletedMessage(msg.message.id);
+        }
+      }
+  
+      if (record.labelsAdded) {
+        for (const msg of record.labelsAdded) {
+          if (msg.message?.id) await handleLabelChange(gmail, msg.message.id);
+        }
+      }
+  
+      if (record.labelsRemoved) {
+        for (const msg of record.labelsRemoved) {
+          if (msg.message?.id) await handleLabelChange(gmail, msg.message.id);
+        }
       }
     }
 
-    console.log("NONE API");
+    pusher.trigger("gmail-channel", "new-email", {
+      body: "email updates",
+    })
+
+    await updateIntegrationHistoryId(integration.id, historyData.data.historyId!);
 
     return NextResponse.json(
       { success: true },
@@ -140,3 +100,86 @@ export async function POST(request: Request) {
     );
   }
 }
+
+const getOAuthClient = (integration: Integration) => {
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CID,
+    process.env.GOOGLE_CS
+  );
+
+  oauth2Client.setCredentials({
+    access_token: integration.accessToken,
+    refresh_token: integration.refreshToken,
+  });
+
+  return oauth2Client;
+};
+
+const fetchEmailDetails = async (gmail: gmail_v1.Gmail, messageId: string) => {
+  const emailResponse = await gmail.users.messages.get({
+    userId: "me",
+    id: messageId,
+  });
+  return parseEmail(emailResponse.data as Email);
+};
+
+const handleNewMessage = async (gmail: gmail_v1.Gmail, integrationId: number, messageId: string) => {
+  const parsedEmail = await fetchEmailDetails(gmail, messageId);
+
+  await prisma.mail.create({
+    data: {
+      from: parsedEmail.from,
+      to: parsedEmail.to,
+      cc: parsedEmail.cc,
+      bcc: parsedEmail.bcc,
+      date: parsedEmail.date ? new Date(parsedEmail.date) : undefined,
+      subject: parsedEmail.subject,
+      messageId,
+      replyTo: parsedEmail.replyTo,
+      snippet: parsedEmail.snippet,
+      threadId: parsedEmail.threadId,
+      plainTextMessage: parsedEmail.plainTextMessage,
+      htmlMessage: parsedEmail.htmlMessage,
+      labelIds: parsedEmail.labelIds,
+      priorityGrade: parsedEmail.priorityGrade,
+      integrationId,
+      attachments: {
+        create: parsedEmail.attachments.map((attachment) => ({
+          filename: attachment.filename,
+          mimeType: attachment.mimeType,
+          data: attachment.data,
+        })),
+      },
+    },
+  });
+};
+
+const handleDeletedMessage = async (messageId: string) => {
+  await prisma.mail.deleteMany({
+    where: { messageId },
+  });
+};
+
+const handleLabelChange = async (gmail: gmail_v1.Gmail, messageId: string) => {
+  const emailResponse = await gmail.users.messages.get({
+    userId: "me",
+    id: messageId,
+  });
+
+  const updatedLabels = emailResponse.data.labelIds || [];
+  await prisma.mail.updateMany({
+    where: { messageId },
+    data: { labelIds: updatedLabels },
+  });
+};
+
+const updateIntegrationHistoryId = async (integrationId: number, newHistoryId: string) => {
+  await prisma.integration.update({
+    where: { id: integrationId },
+    data: {
+      profile: {
+        historyId: newHistoryId,
+      },
+    },
+  });
+};

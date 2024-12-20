@@ -52,20 +52,6 @@ export async function GET(req: NextRequest) {
     });
 
     if (!integration) {
-      const integration = await prisma.integration.create({
-        data: {
-          accessToken: tokens.access_token as string,
-          refreshToken: tokens.refresh_token,
-          provider: "Google",
-          name: "Gmail",
-          profile: {
-            email: userEmailAddress,
-          },
-          email: userEmailAddress as string,
-          userId: user.id,
-        },
-      });
-
       const watchResponse = await gmail.users.watch({
         userId: "me",
         requestBody: {
@@ -74,6 +60,22 @@ export async function GET(req: NextRequest) {
       });
 
       console.log("Watch Response: ", watchResponse);
+      const historyId = watchResponse.data.historyId;
+
+      const integration = await prisma.integration.create({
+        data: {
+          accessToken: tokens.access_token as string,
+          refreshToken: tokens.refresh_token,
+          provider: "Google",
+          name: "Gmail",
+          profile: {
+            email: userEmailAddress,
+            historyId : historyId,
+          },
+          email: userEmailAddress as string,
+          userId: user.id,
+        },
+      });
 
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_SITE_URL}/mailbox/${integration.id}?redirect=google`

@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Pusher from "pusher-js";
 import { useSession } from "next-auth/react";
+import { Badge } from "@/components/ui/badge";
 
 export const MailList = ({
   emails,
@@ -96,6 +97,17 @@ export const MailList = ({
                 <p>{removeNoreplyEmail(email.from)}</p>
                 <p className="">{email.subject}</p>
               </div>
+            </div>
+            <div className="flex flex-row gap-2">
+              {email.labelIds.map((label) => (
+                <Badge
+                  key={label}
+                  variant={"outline"}
+                  className="rounded-xl border text-xs"
+                >
+                 {label}
+                </Badge>
+              ))}
             </div>
           </div>
         ))}
