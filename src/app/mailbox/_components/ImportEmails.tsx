@@ -198,14 +198,6 @@ export const ImportEmails = ({
                   Imported {importStatus.importedCount + 1} of{" "}
                   {importStatus.totalEmails}
                 </p>
-                {/* <Button
-                  variant={"destructive"}
-                  size={"sm"}
-                  onClick={stopImport}
-                  className="px-2 py-1 h-fit bg-red-100 hover:bg-red-200 text-red-500 rounded-lg font-semibold"
-                >
-                  Stop
-                </Button> */}
               </div>
             </div>
           ) : (

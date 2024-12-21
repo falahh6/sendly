@@ -3,8 +3,8 @@ import { gmail_v1, google } from "googleapis";
 import { parseEmail } from "@/lib/emails/utils";
 import { Email } from "@/lib/types/email";
 import prisma from "@/lib/prisma";
-import Pusher from "pusher";
 import { Integration } from "@prisma/client";
+import { pusherServer } from "@/lib/pusher";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -13,14 +13,6 @@ export async function POST(request: Request) {
   const decodedData = JSON.parse(
     Buffer.from(body.message.data, "base64").toString("utf-8")
   );
-
-  const pusher = new Pusher({
-    appId: process.env.PUSHER_APP_ID!,
-    key: process.env.NEXT_PUBLIC_PUSHER_KEY!,
-    secret: process.env.PUSHER_SECRET!,
-    cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
-    useTLS: true,
-  });
 
   try {
     if (!decodedData.emailAddress || !decodedData.historyId) {
@@ -36,7 +28,10 @@ export async function POST(request: Request) {
       },
     });
 
-    const profileData = integration?.profile as Record<string, string | number | boolean>;
+    const profileData = integration?.profile as Record<
+      string,
+      string | number | boolean
+    >;
 
     if (!integration) {
       return NextResponse.json(
@@ -51,29 +46,30 @@ export async function POST(request: Request) {
     const historyData = await gmail.users.history.list({
       userId: "me",
       startHistoryId: profileData.historyId as string,
-    })
+    });
 
     const historyRecords = historyData.data.history || [];
 
     for (const record of historyRecords) {
       if (record.messagesAdded) {
         for (const msg of record.messagesAdded) {
-          if (msg.message?.id) await handleNewMessage(gmail, integration.id, msg.message.id);
+          if (msg.message?.id)
+            await handleNewMessage(gmail, integration.id, msg.message.id);
         }
       }
-  
+
       if (record.messagesDeleted) {
         for (const msg of record.messagesDeleted) {
           if (msg.message?.id) await handleDeletedMessage(msg.message.id);
         }
       }
-  
+
       if (record.labelsAdded) {
         for (const msg of record.labelsAdded) {
           if (msg.message?.id) await handleLabelChange(gmail, msg.message.id);
         }
       }
-  
+
       if (record.labelsRemoved) {
         for (const msg of record.labelsRemoved) {
           if (msg.message?.id) await handleLabelChange(gmail, msg.message.id);
@@ -81,11 +77,14 @@ export async function POST(request: Request) {
       }
     }
 
-    pusher.trigger("gmail-channel", "new-email", {
+    pusherServer.trigger("gmail-channel", "new-email", {
       body: "email updates",
-    })
+    });
 
-    await updateIntegrationHistoryId(integration.id, historyData.data.historyId!);
+    await updateIntegrationHistoryId(
+      integration.id,
+      historyData.data.historyId!
+    );
 
     return NextResponse.json(
       { success: true },
@@ -123,7 +122,11 @@ const fetchEmailDetails = async (gmail: gmail_v1.Gmail, messageId: string) => {
   return parseEmail(emailResponse.data as Email);
 };
 
-const handleNewMessage = async (gmail: gmail_v1.Gmail, integrationId: number, messageId: string) => {
+const handleNewMessage = async (
+  gmail: gmail_v1.Gmail,
+  integrationId: number,
+  messageId: string
+) => {
   const parsedEmail = await fetchEmailDetails(gmail, messageId);
 
   await prisma.mail.create({
@@ -173,7 +176,10 @@ const handleLabelChange = async (gmail: gmail_v1.Gmail, messageId: string) => {
   });
 };
 
-const updateIntegrationHistoryId = async (integrationId: number, newHistoryId: string) => {
+const updateIntegrationHistoryId = async (
+  integrationId: number,
+  newHistoryId: string
+) => {
   await prisma.integration.update({
     where: { id: integrationId },
     data: {

@@ -35,9 +35,13 @@ export async function GET(request: NextRequest) {
           });
 
           if (!integration) {
-            controller.enqueue(encodeMessage(
-              `data: ${JSON.stringify({ error: "Integration not found" })}\n\n`
-            ));
+            controller.enqueue(
+              encodeMessage(
+                `data: ${JSON.stringify({
+                  error: "Integration not found",
+                })}\n\n`
+              )
+            );
             cleanupStream(controller, interval);
             return;
           }
@@ -52,14 +56,16 @@ export async function GET(request: NextRequest) {
 
           if (profile?.isImportCanceled) {
             if (!streamClosed) {
-              controller.enqueue(encodeMessage(
-                `data: ${JSON.stringify({
-                  importedCount,
-                  totalEmails,
-                  isComplete: true,
-                  isCancelled: true,
-                })}\n\n`
-              ));
+              controller.enqueue(
+                encodeMessage(
+                  `data: ${JSON.stringify({
+                    importedCount,
+                    totalEmails,
+                    isComplete: true,
+                    isCancelled: true,
+                  })}\n\n`
+                )
+              );
             }
             cleanupStream(controller, interval);
             return;
@@ -67,29 +73,35 @@ export async function GET(request: NextRequest) {
 
           if (profile?.importComplete) {
             if (!streamClosed) {
-              controller.enqueue(encodeMessage(
-                `data: ${JSON.stringify({
-                  importedCount,
-                  totalEmails,
-                  isComplete: true,
-                })}\n\n`
-              ));
+              controller.enqueue(
+                encodeMessage(
+                  `data: ${JSON.stringify({
+                    importedCount,
+                    totalEmails,
+                    isComplete: true,
+                  })}\n\n`
+                )
+              );
             }
             cleanupStream(controller, interval);
             return;
           }
 
           if (streamClosed === false) {
-            controller.enqueue(encodeMessage(
-              `data: ${JSON.stringify({
-                importedCount,
-                totalEmails,
-                isComplete: false,
-              })}\n\n`
-            ));
+            controller.enqueue(
+              encodeMessage(
+                `data: ${JSON.stringify({
+                  importedCount,
+                  totalEmails,
+                  isComplete: false,
+                })}\n\n`
+              )
+            );
           }
         } catch (error) {
-          controller.enqueue(encodeMessage(`data: ${JSON.stringify({ error: error })}\n\n`));
+          controller.enqueue(
+            encodeMessage(`data: ${JSON.stringify({ error: error })}\n\n`)
+          );
           cleanupStream(controller, interval);
         }
       }, 1000);
@@ -114,6 +126,6 @@ export async function GET(request: NextRequest) {
   }
 
   function encodeMessage(message: unknown): Uint8Array {
-    return new TextEncoder().encode(`data: ${JSON.stringify(message)}\n\n`);
+    return new TextEncoder().encode(message as string);
   }
 }
