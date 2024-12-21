@@ -65,7 +65,7 @@ export const MailList = ({
   }, []);
 
   const sortedEmails = [...emailsList].sort(
-    (a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()
+    (a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()
   );
 
   return (
@@ -73,7 +73,7 @@ export const MailList = ({
       <div className="h-fit max-h-[12%] border-b">
         <h1 className="text-lg font-semibold p-2">Emails</h1>
       </div>
-      <div className="max-h-full overflow-y-auto">
+      <div className="max-h-full overflow-y-auto overflow-x-hidden">
         {sortedEmails.map((email) => (
           <div
             role="button"
