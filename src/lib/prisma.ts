@@ -1,14 +1,14 @@
-import { PrismaClient } from '@prisma/client';
-import { PrismaNeon } from '@prisma/adapter-neon';
-import { Pool, neonConfig } from '@neondatabase/serverless';
+import { PrismaClient } from "@prisma/client";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { Pool, neonConfig } from "@neondatabase/serverless";
 
-import ws from 'ws';
-neonConfig.webSocketConstructor = ws;
+// import ws from "ws";
+// neonConfig.webSocketConstructor = ws;
 
-neonConfig.poolQueryViaFetch = true
+neonConfig.poolQueryViaFetch = true;
 
 declare global {
-  let globalPrisma: PrismaClient | undefined
+  let globalPrisma: PrismaClient | undefined;
 }
 
 const connectionString = `${process.env.DATABASE_URL}`;
@@ -20,7 +20,7 @@ const adapter = new PrismaNeon(pool);
 const prisma = global.globalPrisma || new PrismaClient({ adapter });
 
 //@ts-expect-error: error but works as it's offical way to do it
-if (process.env.NODE_ENV === 'development') global.globalPrisma = prisma;
+if (process.env.NODE_ENV === "development") global.globalPrisma = prisma;
 
 export default prisma;
 
