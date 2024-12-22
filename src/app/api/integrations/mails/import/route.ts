@@ -177,11 +177,17 @@ async function importEmailsInBackground(
     where: { id: integrationId },
   });
 
+  console.log(
+    `Importing emails for integration (importEmailsInBackground) : ${integrationId}`
+  );
+
   pusherServer.trigger(`gmail-channel-${integrationId}`, "mail-import", {
     message: "Import Started",
   });
 
   const profile = integration?.profile as Record<string, ProfileData>;
+
+  console.log("Profile (importEmailsInBackground) : ", profile);
 
   if (profile?.shouldImportStart) {
     console.error("Import process should not be started");
@@ -204,6 +210,7 @@ async function importEmailsInBackground(
 
     for (const message of messages) {
       try {
+        console.log(`Importing email ${message.id}`);
         const updatedIntegration = await prisma.integration.findUnique({
           where: { id: integrationId },
         });
