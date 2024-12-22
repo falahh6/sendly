@@ -98,6 +98,7 @@ const MailboxLayout = async ({
           <ImportEmails
             integrationId={params.integration}
             type="nav"
+            emails={emails}
             integrationProfiles={
               integrationsData?.find(
                 (i: Integration) => i.id == params.integration
@@ -125,7 +126,10 @@ const MailboxLayout = async ({
             {emails?.length > 0 ? (
               <MailList emails={emails} integrationId={params.integration} />
             ) : (
-              <ImportEmails integrationId={params.integration} />
+              <ImportEmails
+                emails={emails}
+                integrationId={params.integration}
+              />
             )}
           </ResizablePanel>
           <ResizableHandle className="bg-transparent dark:bg-transparent" />

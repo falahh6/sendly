@@ -10,13 +10,17 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { pusherClient } from "@/lib/pusher";
+import { ParsedEmail } from "@/lib/types/email";
 
 export const ImportEmails = ({
   integrationId,
+  emails,
   type,
   integrationProfiles,
 }: {
   integrationId: string;
+  emails: ParsedEmail[];
   type?: "nav" | "normal";
   integrationProfiles?: Record<string, string | number | boolean>;
 }) => {
@@ -31,7 +35,6 @@ export const ImportEmails = ({
     isComplete: false,
     importCancelled: false,
   });
-  const [stopped] = useState(false);
 
   const [importLoading, setImportLoading] = useState(false);
 
@@ -48,8 +51,6 @@ export const ImportEmails = ({
         ...prev,
         totalEmails,
       }));
-
-      if (!stopped) return importProgressEvent(); //pollImportProgress(Number(integrationId));
     } catch (error) {
       console.error("Failed to start Gmail import:", error);
     } finally {
@@ -64,64 +65,65 @@ export const ImportEmails = ({
     );
   };
 
-  const importProgressEvent = () => {
-    const eventSource = new EventSource(
-      `/api/events/email-import?integrationId=${integrationId}`
-    );
-
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log("Data from event source: ", data);
-
-      if (data.error) {
-        console.error(data.error);
-        eventSource.close();
-      }
-
-      if (data.isComplete) {
-        setImportStatus({
-          totalEmails: data.totalEmails,
-          importedCount: data.importedCount,
-          isComplete: data.isComplete,
-          importCancelled: data.isCancelled,
-        });
-        console.log("Import complete!");
-        eventSource.close();
-
-        window.location.reload();
-      } else {
-        setImportStatus({
-          totalEmails: data.totalEmails,
-          importedCount: data.importedCount,
-          isComplete: data.isComplete,
-          importCancelled: data.isCancelled,
-        });
-
-        if (data.isCancelled) {
-          console.log("Import cancelled! DATA : ", data);
-          eventSource.close();
-        }
-      }
-    };
-
-    eventSource.onerror = () => {
-      console.error("Failed to receive updates");
-      eventSource.close();
-    };
-  };
-
   let init = false;
   useEffect(() => {
-    if (type === "nav" && !init) {
-      if (integrationProfiles?.isImportProcessing) {
-        importProgressEvent();
+    if (!init) {
+      if (
+        integrationProfiles?.isImportProcessing ||
+        (!integrationProfiles?.isImportCancelled &&
+          !integrationProfiles?.importComplete)
+      ) {
+        const importChannel = pusherClient.subscribe(
+          `gmail-channel-${integrationId}`
+        );
+
+        console.log(importChannel);
+
+        importChannel.bind(
+          "mail-import",
+          (
+            data:
+              | {
+                  body: {
+                    totalEmails: number;
+                    importedEmailCount: number;
+                    importComplete: boolean;
+                  };
+                  message: string;
+                }
+              | {
+                  message: string;
+                }
+          ) => {
+            if ("body" in data) {
+              setImportStatus((prev) => ({
+                ...prev,
+                totalEmails: data.body.totalEmails,
+                importedCount: data.body.importedEmailCount,
+                isComplete: data.body.importComplete,
+              }));
+            }
+
+            if ("body" in data && data.body.importComplete) {
+              window.location.reload();
+              importChannel.unbind("mail-import");
+              pusherClient.unsubscribe(`gmail-channel-${integrationId}`);
+            }
+          }
+        );
+
+        return () => {
+          importChannel.unbind("mail-import");
+          pusherClient.unsubscribe(`gmail-channel-${integrationId}`);
+        };
       }
       init = true;
     }
   }, []);
 
   if (type === "nav") {
-    if (importStatus.totalEmails === 0) return null;
+    if (!integrationProfiles?.isImportProcessing || emails.length === 0)
+      return <></>;
 
     return (
       <DropdownMenu>

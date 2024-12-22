@@ -4,6 +4,7 @@ import { OAuth2Client } from "google-auth-library";
 import { parseEmail } from "@/lib/emails/utils";
 import { Email } from "@/lib/types/email";
 import prisma from "@/lib/prisma";
+import { pusherServer } from "@/lib/pusher";
 
 type ProfileData = string | number | boolean;
 
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
     let response = await gmail.users.messages.list({
       userId: "me",
       maxResults: isTesting ? 10 : 500,
-      q : "",
+      q: "",
       includeSpamTrash: true,
     });
 
@@ -176,6 +177,10 @@ async function importEmailsInBackground(
     where: { id: integrationId },
   });
 
+  pusherServer.trigger(`gmail-channel-${integrationId}`, "mail-import", {
+    message: "Import Started",
+  });
+
   const profile = integration?.profile as Record<string, ProfileData>;
 
   if (profile?.shouldImportStart) {
@@ -251,6 +256,15 @@ async function importEmailsInBackground(
         });
 
         importedCount++;
+
+        pusherServer.trigger(`gmail-channel-${integrationId}`, "mail-import", {
+          body: {
+            totalEmails: messages.length,
+            importedEmailCount: importedCount,
+            importComplete: importedCount === messages.length,
+          },
+          message: "Import in Progress",
+        });
 
         profile = integration?.profile as Record<string, ProfileData>;
         integration = await prisma.integration.update({
