@@ -95,6 +95,7 @@ export const ImportEmails = ({
                   message: string;
                 }
           ) => {
+            console.log("Import data: ", data);
             if ("body" in data) {
               setImportStatus((prev) => ({
                 ...prev,
