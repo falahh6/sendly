@@ -97,6 +97,13 @@ export const ImportEmails = ({
           ) => {
             console.log("Import data: ", data);
             if ("body" in data) {
+              if (
+                (data.body.totalEmails === data.body.importedEmailCount ||
+                  data.body.importComplete) &&
+                type !== "nav"
+              ) {
+                window.location.reload();
+              }
               setImportStatus((prev) => ({
                 ...prev,
                 totalEmails: data.body.totalEmails,
@@ -105,7 +112,7 @@ export const ImportEmails = ({
               }));
             }
 
-            if ("body" in data && data.body.importComplete) {
+            if ("body" in data && data.body.importComplete && type !== "nav") {
               window.location.reload();
               importChannel.unbind("mail-import");
               pusherClient.unsubscribe(`gmail-channel-${integrationId}`);
