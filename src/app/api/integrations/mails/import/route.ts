@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
     while (response.data.nextPageToken && !isTesting) {
       response = await gmail.users.messages.list({
         userId: "me",
-        maxResults: 1,
+        maxResults: 500,
         pageToken: response.data.nextPageToken,
       });
 
