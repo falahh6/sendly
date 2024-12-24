@@ -61,7 +61,7 @@ export const ImportEmails = ({
   const calculateProgress = () => {
     if (importStatus.totalEmails === 0) return 0;
     return Math.round(
-      ((importStatus.importedCount + 1) / importStatus.totalEmails) * 100
+      ((importStatus.importedCount) / importStatus.totalEmails) * 100
     );
   };
 
@@ -205,7 +205,7 @@ export const ImportEmails = ({
               <Progress value={calculateProgress()} />
               <div className="pt-2 flex flex-row justify-between">
                 <p className=" mt-2">
-                  Imported {importStatus.importedCount + 1} of{" "}
+                  Imported {importStatus.importedCount} of{" "}
                   {importStatus.totalEmails}
                 </p>
               </div>

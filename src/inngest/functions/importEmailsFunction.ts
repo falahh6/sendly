@@ -20,11 +20,10 @@ export const importEmailsFunction = inngest.createFunction(
   async ({ event, step }) => {
     const { integrationId } = event.data;
 
-    const integration = await step.run("retrieve-integration", async () => {
-      return prisma.integration.findFirst({
+    const integration = await prisma.integration.findFirst({
         where: { id: integrationId },
-      });
     });
+
     console.log("Integration :  ", integration);
 
     if (!integration) {
@@ -100,8 +99,10 @@ export const importEmailsFunction = inngest.createFunction(
       });
     });
 
+    console.log("PROFILE : ", profile);
     const batchSize = 20;
-    let importedCount = 0;
+    let importedCount = profile.lastEmailImportedCount ?? 0;
+    console.log("Imported Count : ", importedCount);
 
     for (let i = 0; i < messages.length; i += batchSize) {
       const batch = messages.slice(i, i + batchSize);
@@ -143,7 +144,21 @@ export const importEmailsFunction = inngest.createFunction(
               },
             });
 
-            importedCount++;
+            if(typeof importedCount === 'number') {
+              importedCount++;
+            }
+
+            await prisma.integration.update({
+              where: { id: integration.id },
+              data: {
+                profile: {
+                  ...profile,
+                  lastImportCompletedAt: new Date(),
+                  isImportProcessing: true,
+                  lastEmailImportedCount: importedCount,
+                },
+              },
+            });
 
             // Notify client about the progress
             pusherServer.trigger(
@@ -189,6 +204,18 @@ export const importEmailsFunction = inngest.createFunction(
           },
         },
       });
+
+      pusherServer.trigger(
+        `gmail-channel-${integrationId}`,
+        "mail-import",
+        {
+          body: {
+            importedEmailCount: importedCount,
+            totalEmails: messages.length,
+          },
+          message: "Import completed",
+        }
+      );
     });
 
     return { message: "Import complete" };
