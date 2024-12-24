@@ -92,7 +92,7 @@ export const importEmailsFunction = inngest.createFunction(
           profile: {
             ...profile,
             lastImportedAt: new Date(),
-            totalEmailsToImport: messages.length,
+            totalEmails: messages.length,
             isImportProcessing: true,
           },
         },
@@ -101,7 +101,7 @@ export const importEmailsFunction = inngest.createFunction(
 
     console.log("PROFILE : ", profile);
     const batchSize = 20;
-    let importedCount = profile.lastEmailImportedCount ?? 0;
+    let importedCount = profile.emailImportedCount ?? 0;
     console.log("Imported Count : ", importedCount);
 
     for (let i = 0; i < messages.length; i += batchSize) {
@@ -155,7 +155,7 @@ export const importEmailsFunction = inngest.createFunction(
                   ...profile,
                   lastImportCompletedAt: new Date(),
                   isImportProcessing: true,
-                  lastEmailImportedCount: importedCount,
+                  emailImportedCount: importedCount,
                 },
               },
             });

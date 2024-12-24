@@ -30,8 +30,8 @@ export const ImportEmails = ({
     isComplete: boolean;
     importCancelled?: boolean;
   }>({
-    totalEmails: 0,
-    importedCount: 0,
+    totalEmails: (integrationProfiles?.totalEmails as number) || 0,
+    importedCount: (integrationProfiles?.emailImportedCount as number) || 0,
     isComplete: false,
     importCancelled: false,
   });
@@ -68,6 +68,8 @@ export const ImportEmails = ({
   let init = false;
   useEffect(() => {
     if (!init) {
+      console.log("integrationProfiles : ", integrationProfiles);
+      console.log("importStatus : ", importStatus);
       if (
         integrationProfiles?.isImportProcessing ||
         (!integrationProfiles?.isImportCancelled &&
@@ -168,14 +170,6 @@ export const ImportEmails = ({
                     Imported {importStatus.importedCount} of{" "}
                     {importStatus.totalEmails}
                   </p>
-                  {/* <Button
-                    variant={"destructive"}
-                    size={"sm"}
-                    onClick={stopImport}
-                    className="px-2 py-1 h-fit bg-red-100 hover:bg-red-200 text-red-500 rounded-lg font-semibold"
-                  >
-                    Stop
-                  </Button> */}
                 </div>
               </div>
             </>
