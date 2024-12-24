@@ -100,7 +100,7 @@ export const importEmailsFunction = inngest.createFunction(
       });
     });
 
-    const batchSize = 100;
+    const batchSize = 20;
     let importedCount = 0;
 
     for (let i = 0; i < messages.length; i += batchSize) {
