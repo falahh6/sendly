@@ -68,13 +68,16 @@ export default async function Home() {
       <div className="h-[30vh] max-sm:h-[20vh] p-10 ">
         <div className="flex flex-col md:flex-row gap-4 justify-between">
           <div className="space-x-3">
-            <Button
+            <Button className="w-full xl:w-auto rounded-xl" disabled>
+              Coming soon
+            </Button>
+            {/* <Button
               disabled={!session?.accessToken}
               asChild={(session && session?.accessToken.length > 0) || false}
               className="w-full xl:w-auto rounded-xl"
             >
               <Link href={"/playground"}>Payground</Link>
-            </Button>
+            </Button> */}
           </div>{" "}
           {/* <div className="flex flex-row max-sm:w-full items-center gap-4">
             <ContinueWithGoogle /> <Logout />
