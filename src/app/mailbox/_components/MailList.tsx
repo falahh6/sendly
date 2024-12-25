@@ -1,25 +1,30 @@
 "use client";
 
 import { ParsedEmail } from "@/lib/types/email";
-import { removeNoreplyEmail } from "@/lib/utils";
-import { User } from "lucide-react";
+import { cn, removeNoreplyEmail } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Pusher from "pusher-js";
 import { useSession } from "next-auth/react";
-import { Badge } from "@/components/ui/badge";
+import { useIntegrations } from "@/context/mailbox";
+import { Integration } from "@/lib/types/integrations";
 
 export const MailList = ({
   emails,
   integrationId,
+  integrations,
 }: {
   emails: ParsedEmail[];
   integrationId: string;
+  integrations: Integration[];
 }) => {
   const [emailsList, setEmailsList] = useState(emails);
   const router = useRouter();
   const pathname = usePathname();
   const { data: session } = useSession();
+  const [selectedMail, setSelectedMail] = useState(pathname.split("/")[3]);
+
+  const { setIntegrations } = useIntegrations();
 
   const fetchEmails = async () => {
     try {
@@ -45,6 +50,7 @@ export const MailList = ({
   const mailboxId = pathname.split("/")[2];
 
   const selectMailHandler = (id: string) => {
+    setSelectedMail(id);
     router.push(`/mailbox/${mailboxId}/${id}`);
   };
 
@@ -53,6 +59,25 @@ export const MailList = ({
   });
 
   useEffect(() => {
+    console.log("Emails: ", emails);
+    console.log("IntegrationId: ", integrationId);
+    console.log("Integrations : ", integrations);
+
+    if (emails) {
+      const updatededIntegrationsWithEmail = integrations?.map(
+        (integration) => {
+          if (integration.id === Number(integrationId)) {
+            return {
+              ...integration,
+              mails: emails,
+            };
+          }
+          return integration;
+        }
+      );
+      setIntegrations(updatededIntegrationsWithEmail);
+    }
+
     const channel = pusher.subscribe("gmail-channel");
     channel.bind("new-email", (data: { body: string; messageId: string }) => {
       console.log("New Email: ", data);
@@ -79,7 +104,10 @@ export const MailList = ({
             role="button"
             tabIndex={0}
             key={email.id}
-            className="text-sm border-b w-full p-2 hover:bg-gray-100 hover:cursor-pointer"
+            className={cn(
+              "text-sm border-b w-full p-2 hover:bg-gray-100 hover:cursor-pointer",
+              selectedMail === email.id && "bg-gray-100"
+            )}
             onClick={() => selectMailHandler(email.id)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
@@ -89,24 +117,20 @@ export const MailList = ({
           >
             <div className="p-2 flex flex-row gap-2">
               <div>
-                <div className="w-fit bg-gray-100 p-1.5 rounded-2xl border">
-                  <User className="h-4 w-4" />
-                </div>
-              </div>
-              <div>
-                <p>{removeNoreplyEmail(email.from)}</p>
-                <p className="">{email.subject}</p>
+                <p className="text-base font-semibold">
+                  {removeNoreplyEmail(email.from)}
+                </p>
+                <p className="text-sm">{email.subject}</p>
               </div>
             </div>
             <div className="flex flex-row gap-2">
               {email.labelIds.map((label) => (
-                <Badge
+                <p
                   key={label}
-                  variant={"outline"}
-                  className="rounded-xl border text-xs"
+                  className="rounded-md border text-[10px] px-1 bg-gray-100"
                 >
-                 {label}
-                </Badge>
+                  {label}
+                </p>
               ))}
             </div>
           </div>

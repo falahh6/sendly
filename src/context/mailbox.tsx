@@ -1,7 +1,7 @@
 "use client";
 
-import { fetcher } from "@/lib/utils";
-import { Session } from "next-auth";
+import { Integration } from "@/lib/types/integrations";
+import { usePathname } from "next/navigation";
 import {
   createContext,
   useContext,
@@ -10,15 +10,14 @@ import {
   Dispatch,
   SetStateAction,
   useMemo,
+  useEffect,
 } from "react";
-import useSWR from "swr";
 
 interface IntegrationContextType {
   integrations: Integration[];
+  setIntegrations: Dispatch<SetStateAction<Integration[]>>;
   currentIntegration: Integration | undefined;
   setCurrentIntegration: Dispatch<SetStateAction<Integration | undefined>>;
-
-  isLoading: boolean;
 }
 
 const IntegrationContext = createContext<IntegrationContextType | undefined>(
@@ -27,34 +26,36 @@ const IntegrationContext = createContext<IntegrationContextType | undefined>(
 
 export function MailboxProvider({
   children,
-  userSessionData,
+  integrationsData,
 }: Readonly<{
   children: ReactNode;
-  userSessionData: Session | null;
+  integrationsData: Integration[];
 }>) {
+  const pathname = usePathname();
   const [currentIntegration, setCurrentIntegration] = useState<
     Integration | undefined
   >();
-
-  const { data, isLoading } = useSWR(
-    userSessionData?.accessToken
-      ? ["/api/integrations", userSessionData.accessToken]
-      : null,
-    ([url, token]) => fetcher(url, token),
-    { revalidateOnFocus: false, dedupingInterval: 60000 }
-  );
-
-  const integrations = useMemo(() => data?.integrations || [], [data]);
+  const [integrations, setIntegrations] =
+    useState<Integration[]>(integrationsData);
 
   const value = useMemo(
     () => ({
       integrations,
       currentIntegration,
       setCurrentIntegration,
-      isLoading,
+      setIntegrations,
     }),
-    [integrations, currentIntegration, setCurrentIntegration, isLoading]
+    [integrations, currentIntegration, setCurrentIntegration, setIntegrations]
   );
+
+  useEffect(() => {
+    console.log("ALl integrations: ", integrations);
+    setCurrentIntegration(
+      integrations.find(
+        (i: Integration) => i.id === Number(pathname.split("/")[2])
+      )
+    );
+  }, [integrations]);
 
   return (
     <IntegrationContext.Provider value={value}>

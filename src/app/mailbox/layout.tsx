@@ -2,11 +2,35 @@ import { MailboxProvider } from "@/context/mailbox";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]/authOptions";
 
+const getIntegrations = async (authToken: string) => {
+  const response = await fetch(
+    process.env.NEXT_PUBLIC_SITE_URL + "/api/integrations",
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        auth: authToken,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    console.error("Error fetching integrations:", error);
+    return null;
+  }
+
+  const data = await response.json();
+  return data.integrations || [];
+};
+
 const MailboxLayout = async ({ children }: { children: React.ReactNode }) => {
   const data = await getServerSession(authOptions);
 
+  const integrations = await getIntegrations(data?.accessToken ?? "");
+
   return (
-    <MailboxProvider userSessionData={data}>
+    <MailboxProvider integrationsData={integrations}>
       <main className="w-full bg-white flex flex-row text-sm md:text-base">
         <div className="w-full p-4 max-w-[1440px] h-screen space-y-3 flex flex-col justify-center items-center">
           {children}

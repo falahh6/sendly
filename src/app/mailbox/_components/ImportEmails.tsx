@@ -61,15 +61,13 @@ export const ImportEmails = ({
   const calculateProgress = () => {
     if (importStatus.totalEmails === 0) return 0;
     return Math.round(
-      ((importStatus.importedCount) / importStatus.totalEmails) * 100
+      (importStatus.importedCount / importStatus.totalEmails) * 100
     );
   };
 
   let init = false;
   useEffect(() => {
     if (!init) {
-      console.log("integrationProfiles : ", integrationProfiles);
-      console.log("importStatus : ", importStatus);
       if (
         integrationProfiles?.isImportProcessing ||
         (!integrationProfiles?.isImportCancelled &&

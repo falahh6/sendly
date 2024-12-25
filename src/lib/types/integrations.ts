@@ -1,9 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+import { ParsedEmail } from "./email";
 
-type Integration = {
-  id: string;
+export interface Integration {
+  id: number;
   name: string;
-  email: string;
+  profile: Record<string, string | number | boolean>;
   accessToken: string;
-  provider: "Google" | "Azure";
-};
+  refreshToken: string;
+  provider: string;
+  userId: string;
+  email: string;
+  mails: ParsedEmail[];
+}

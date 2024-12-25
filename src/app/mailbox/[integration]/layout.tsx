@@ -10,6 +10,8 @@ import { MailList } from "../_components/MailList";
 import { ImportEmails } from "../_components/ImportEmails";
 import React from "react";
 import { redirect } from "next/navigation";
+import { Integration } from "@/lib/types/integrations";
+import Link from "next/link";
 
 const getIntegrations = async (authToken: string) => {
   const response = await fetch(
@@ -66,8 +68,9 @@ const MailboxLayout = async ({
   console.log("Integrations : ", integrationsData);
 
   if (
-    integrationsData?.find((i: Integration) => i.id == params.integration) ===
-    undefined
+    integrationsData?.find(
+      (i: Integration) => i.id == Number(params.integration)
+    ) === undefined
   ) {
     return "INVALID INTEGRATION, Please check if you have correct ID ";
   }
@@ -80,7 +83,9 @@ const MailboxLayout = async ({
   return (
     <>
       <div className="flex flex-row items-center justify-between p-2 h-[8vh] w-full">
-        <div>logo</div>
+        <div>
+          <Link href={"/"}>logo</Link>
+        </div>
         <div className="bg-gray-100 w-[40%] border text-center rounded-md p-2 flex flex-row items-center justify-center">
           Search or Quick actions
         </div>
@@ -101,7 +106,7 @@ const MailboxLayout = async ({
             emails={emails}
             integrationProfiles={
               integrationsData?.find(
-                (i: Integration) => i.id == params.integration
+                (i: Integration) => i.id == Number(params.integration)
               )?.profile
             }
           />
@@ -109,22 +114,27 @@ const MailboxLayout = async ({
       </div>
       <div className="h-[78vh] w-full">
         <ResizablePanelGroup direction="horizontal" className="space-x-1">
-          {/* <ResizablePanel
+          <ResizablePanel
             className="p-4 bg-neutral-50 rounded-lg border"
-            defaultSize={15}
+            defaultSize={5}
             minSize={5}
-            maxSize={15}
+            maxSize={5}
           >
             Tools . sidebar
-          </ResizablePanel> */}
+          </ResizablePanel>
           <ResizableHandle className="bg-transparent dark:bg-transparent" />
           <ResizablePanel
             className="bg-white rounded-lg border"
             defaultSize={85}
-            minSize={30}
+            minSize={20}
+            maxSize={35}
           >
             {emails?.length > 0 ? (
-              <MailList emails={emails} integrationId={params.integration} />
+              <MailList
+                emails={emails}
+                integrationId={params.integration}
+                integrations={integrationsData}
+              />
             ) : (
               <ImportEmails
                 emails={emails}

@@ -1,4 +1,5 @@
 import { ResizablePanel } from "@/components/ui/resizable";
+import { EmailView } from "./_components/emailView";
 
 const Page = ({
   params,
@@ -11,9 +12,9 @@ const Page = ({
     <ResizablePanel
       className="p-4 bg-neutral-100 rounded-lg border"
       defaultSize={55}
-      minSize={45}
+      minSize={55}
     >
-      {params.mail}
+      <EmailView emailId={params.mail} />
     </ResizablePanel>
   );
 };

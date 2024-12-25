@@ -11,6 +11,8 @@ import { Icons } from "../icons";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader, Plus } from "lucide-react";
+import { Integration } from "@/lib/types/integrations";
+import { useIntegrations } from "@/context/mailbox";
 
 export const Selector = ({
   integrationId,
@@ -22,6 +24,8 @@ export const Selector = ({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
+  const { setCurrentIntegration } = useIntegrations();
+
   const valChangeHandler = (val: string) => {
     if (val === "add-new") {
       startTransition(() => {
@@ -29,7 +33,17 @@ export const Selector = ({
       });
       return;
     }
+
     console.log("Selected Integration:", val);
+    console.log("Integrations :", integrations);
+    console.log(
+      "Integration:",
+      integrations.find((integration) => integration.id === Number(val))
+    );
+    setCurrentIntegration(
+      integrations.find((integration) => integration.id === parseInt(val))
+    );
+
     startTransition(() => {
       router.push("/mailbox/" + val);
     });
