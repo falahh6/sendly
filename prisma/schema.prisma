@@ -15,6 +15,7 @@ model User {
   emailVerified      Boolean     
   authToken         String?
   verificationToken  String?
+  encryptionkey     String?
   integrations      Integration[] 
   bio   String?  
 

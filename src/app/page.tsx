@@ -6,8 +6,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { getServerSession } from "next-auth";
 import { authOptions } from "./api/auth/[...nextauth]/authOptions";
-import Integrations from "@/components/integrations/google";
-import { redirect } from "next/navigation";
+import Encryption from "@/components/enc/EncryptionKey";
 
 const SocialLink = ({
   href,
@@ -24,12 +23,16 @@ const SocialLink = ({
 export default async function Home() {
   const session = await getServerSession(authOptions);
 
-  if (session?.user) redirect("/mailbox");
-
-  console.log(session);
+  console.log("F Session : ", session);
 
   return (
     <main className="bg-white dark:bg-neutral-700 text-neutral-500 dark:text-neutral-300">
+      {session && (
+        <Encryption
+          userAuthToken={session?.accessToken || ""}
+          encKey={session.encryptionKey}
+        />
+      )}
       <div className="bg-neutral-100 dark:bg-neutral-800 p-10 h-[60vh] lg:h-[50vh] flex flex-col md:flex-row md:items-end justify-between">
         <div className="max-sm:mt-10">
           <h1 className="font-semibold">SENDLY</h1>
@@ -71,24 +74,7 @@ export default async function Home() {
             <Button className="w-full xl:w-auto rounded-xl" disabled>
               Coming soon
             </Button>
-            {/* <Button
-              disabled={!session?.accessToken}
-              asChild={(session && session?.accessToken.length > 0) || false}
-              className="w-full xl:w-auto rounded-xl"
-            >
-              <Link href={"/playground"}>Payground</Link>
-            </Button> */}
           </div>{" "}
-          {/* <div className="flex flex-row max-sm:w-full items-center gap-4">
-            <ContinueWithGoogle /> <Logout />
-          </div> */}
-        </div>
-        <div>
-          {session?.user ? (
-            <Integrations />
-          ) : (
-            <>{/* <p className="mt-4 text-sm">Login for integrations</p> */}</>
-          )}
         </div>
       </div>
       <div className="p-10 h-[20vh] space-y-2 w-full flex flex-col md:flex-row justify-between items-end">

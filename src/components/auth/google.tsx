@@ -27,7 +27,7 @@ const ContinueWithGoogle = () => {
         <Button
           onClick={() => {
             setLoading(true);
-            signIn("google");
+            signIn("google")
           }}
           disabled={loading || status === "loading"}
           className="w-full xl:w-auto"

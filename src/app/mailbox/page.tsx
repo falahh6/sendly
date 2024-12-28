@@ -13,7 +13,7 @@ import { useIntegrations } from "@/context/mailbox";
 import { ChevronRight, Loader, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AddNewIntegration } from "./_components/addNewIntegration";
 
 const Page = () => {
@@ -25,6 +25,12 @@ const Page = () => {
   const params = useSearchParams();
   const mode = params.get("m");
   const [visitLoading, setVisitLoading] = useState(false);
+
+  useEffect(() => {
+    if (integrations.length > 0) {
+      setSelectedIntegration(String(integrations[0].id));
+    }
+  }, [integrations]);
 
   return (
     <div className="flex items-center justify-center h-screen text-neutral-600">
@@ -42,8 +48,8 @@ const Page = () => {
                   setSelectedIntegration(val);
                 }
               }}
-              defaultValue={String(integrations[0]?.id)}
-              value={String(selectedIntegration ?? integrations[0]?.id)}
+              defaultValue={String(selectedIntegration)}
+              value={String(selectedIntegration)}
             >
               <SelectTrigger className="text-left w-fit h-fit rounded-xl ring-0">
                 <SelectValue

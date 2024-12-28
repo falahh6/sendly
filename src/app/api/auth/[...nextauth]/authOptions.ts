@@ -41,18 +41,20 @@ export const authOptions: NextAuthOptions = {
       }
 
       token.accessToken = user.authToken;
-
+      token.encryptionKey = user.encryptionkey;
       return token;
     },
     async session({ session, token }: any) {
-      session.accessToken = token.accessToken;
+      console.log("Session Callback session :", session);
 
+      session.accessToken = token.accessToken;
+      session.encryptionKey = token.encryptionKey;
       return session;
     },
   },
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-    updateAge: 24 * 60 * 60, // Token is refreshed once per day if expired
+    maxAge: 30 * 24 * 60 * 60,
+    updateAge: 24 * 60 * 60,
   },
 };

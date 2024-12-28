@@ -12,6 +12,7 @@ import React from "react";
 import { redirect } from "next/navigation";
 import { Integration } from "@/lib/types/integrations";
 import Link from "next/link";
+import { TestAPICall } from "@/components/mailbox-tools/TestCall";
 
 const getIntegrations = async (authToken: string) => {
   const response = await fetch(
@@ -121,6 +122,7 @@ const MailboxLayout = async ({
             maxSize={5}
           >
             Tools . sidebar
+            <TestAPICall />
           </ResizablePanel>
           <ResizableHandle className="bg-transparent dark:bg-transparent" />
           <ResizablePanel
