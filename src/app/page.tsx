@@ -1,8 +1,6 @@
 import { Dot, Github, Twitter } from "lucide-react";
 import Link from "next/link";
 import React from "react";
-// import ContinueWithGoogle from "@/components/auth/google";
-// import Logout from "@/components/auth/Logout";
 import { Button } from "@/components/ui/button";
 import { getServerSession } from "next-auth";
 import { authOptions } from "./api/auth/[...nextauth]/authOptions";
@@ -30,9 +28,10 @@ export default async function Home() {
       {session && (
         <Encryption
           userAuthToken={session?.accessToken || ""}
-          encKey={session.encryptionKey}
+          encKey={session.encryptionkey}
         />
       )}
+
       <div className="bg-neutral-100 dark:bg-neutral-800 p-10 h-[60vh] lg:h-[50vh] flex flex-col md:flex-row md:items-end justify-between">
         <div className="max-sm:mt-10">
           <h1 className="font-semibold">SENDLY</h1>

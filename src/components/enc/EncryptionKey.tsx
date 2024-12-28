@@ -58,6 +58,8 @@ export default function Encryption({
   const [encryptLoading, setEncryptLoading] = useState(true);
 
   useEffect(() => {
+    console.log("ENC key : ", encKey);
+    console.log("User Auth Token : ", userAuthToken);
     if (init) {
       handleEncryptionKeySetup(userAuthToken);
       init = false;
@@ -74,7 +76,7 @@ export default function Encryption({
       return;
     }
 
-    const response = await fetch("/api/enc/public-key");
+    const response = await fetch("/api/enc/keys?type=public");
     const { publicKey } = await response.json();
 
     const encryptedUserKey = await encryptWithPublicKey(publicKey, exportedKey);

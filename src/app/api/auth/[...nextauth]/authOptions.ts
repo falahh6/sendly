@@ -14,9 +14,6 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, account }: any) {
-      console.log("JWT Callback token :", token);
-      console.log("JWT Callback account :", account);
-
       if (!account) return token;
 
       let user = await prisma.user.findFirst({
@@ -24,6 +21,8 @@ export const authOptions: NextAuthOptions = {
           email: token.email,
         },
       });
+
+      console.log("User found &&:", user);
 
       if (!user) {
         user = await prisma.user.create({
@@ -38,17 +37,17 @@ export const authOptions: NextAuthOptions = {
         console.log("User created:", user);
       } else {
         console.log("User found:", user);
+        token.encryptionkey = user.encryptionkey;
       }
 
       token.accessToken = user.authToken;
-      token.encryptionKey = user.encryptionkey;
       return token;
     },
     async session({ session, token }: any) {
-      console.log("Session Callback session :", session);
-
       session.accessToken = token.accessToken;
-      session.encryptionKey = token.encryptionKey;
+      session.encryptionkey = token.encryptionkey;
+
+      console.log("SESSSION CB : ", session);
       return session;
     },
   },
