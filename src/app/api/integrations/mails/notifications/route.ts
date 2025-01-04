@@ -5,6 +5,8 @@ import { Email } from "@/lib/types/email";
 import prisma from "@/lib/prisma";
 import { Integration } from "@prisma/client";
 import { pusherServer } from "@/lib/pusher";
+import { evervault } from "@/lib/evervault";
+import { encryptEmailFields } from "@/inngest/functions/importEmailsFunction";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -41,7 +43,7 @@ export async function POST(request: Request) {
     }
 
     const oauth2Client = getOAuthClient(integration);
-    const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+    const gmail = google.gmail({ version: "v1", auth: await oauth2Client });
 
     const historyData = await gmail.users.history.list({
       userId: "me",
@@ -100,15 +102,15 @@ export async function POST(request: Request) {
   }
 }
 
-const getOAuthClient = (integration: Integration) => {
+const getOAuthClient = async (integration: Integration) => {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CID,
     process.env.GOOGLE_CS
   );
 
   oauth2Client.setCredentials({
-    access_token: integration.accessToken,
-    refresh_token: integration.refreshToken,
+    access_token: await evervault.decrypt(integration.accessToken),
+    refresh_token: await evervault.decrypt(integration.refreshToken),
   });
 
   return oauth2Client;
@@ -129,25 +131,27 @@ const handleNewMessage = async (
 ) => {
   const parsedEmail = await fetchEmailDetails(gmail, messageId);
 
+  const encryptedEmail = await encryptEmailFields(parsedEmail, messageId);
+
   await prisma.mail.create({
     data: {
-      from: parsedEmail.from,
-      to: parsedEmail.to,
-      cc: parsedEmail.cc,
-      bcc: parsedEmail.bcc,
+      from: encryptedEmail.from,
+      to: encryptedEmail.to,
+      cc: encryptedEmail.cc,
+      bcc: encryptedEmail.bcc,
       date: parsedEmail.date ? new Date(parsedEmail.date) : undefined,
-      subject: parsedEmail.subject,
-      messageId,
-      replyTo: parsedEmail.replyTo,
-      snippet: parsedEmail.snippet,
-      threadId: parsedEmail.threadId,
-      plainTextMessage: parsedEmail.plainTextMessage,
-      htmlMessage: parsedEmail.htmlMessage,
+      subject: encryptedEmail.subject,
+      messageId: encryptedEmail.messageId,
+      replyTo: encryptedEmail.replyTo,
+      snippet: encryptedEmail.snippet,
+      threadId: encryptedEmail.threadId,
+      plainTextMessage: encryptedEmail.plainTextMessage,
+      htmlMessage: encryptedEmail.htmlMessage,
       labelIds: parsedEmail.labelIds,
       priorityGrade: parsedEmail.priorityGrade,
       integrationId,
       attachments: {
-        create: parsedEmail.attachments.map((attachment) => ({
+        create: encryptedEmail.attachments.map((attachment) => ({
           filename: attachment.filename,
           mimeType: attachment.mimeType,
           data: attachment.data,

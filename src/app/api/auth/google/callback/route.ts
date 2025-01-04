@@ -1,3 +1,4 @@
+import { evervault } from "@/lib/evervault";
 import prisma from "@/lib/prisma";
 import { google } from "googleapis";
 import { NextRequest, NextResponse } from "next/server";
@@ -62,15 +63,17 @@ export async function GET(req: NextRequest) {
       console.log("Watch Response: ", watchResponse);
       const historyId = watchResponse.data.historyId;
 
+      console.log("TOKENS : ", tokens);
+
       const integration = await prisma.integration.create({
         data: {
-          accessToken: tokens.access_token as string,
-          refreshToken: tokens.refresh_token,
+          accessToken: await evervault.encrypt(tokens.access_token as string),
+          refreshToken: await evervault.encrypt(tokens.refresh_token),
           provider: "Google",
           name: "Gmail",
           profile: {
             email: userEmailAddress,
-            historyId : historyId,
+            historyId: historyId,
           },
           email: userEmailAddress as string,
           userId: user.id,

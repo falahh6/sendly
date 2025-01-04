@@ -3,6 +3,7 @@ import { google } from "googleapis";
 import { OAuth2Client } from "google-auth-library";
 import prisma from "@/lib/prisma";
 import { inngest } from "@/inngest/client";
+import { evervault } from "@/lib/evervault";
 
 type ProfileData = string | number | boolean;
 
@@ -51,9 +52,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const tokens = {
+      access_token: await evervault.decrypt(integration.accessToken),
+      refresh_token: await evervault.decrypt(integration.refreshToken ?? ""),
+    };
+
+    console.log("Tokens (import): ", tokens);
+
     oauth2Client.setCredentials({
-      access_token: integration.accessToken,
-      refresh_token: integration.refreshToken ?? undefined,
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
     });
 
     const gmail = google.gmail({ version: "v1", auth: oauth2Client });
