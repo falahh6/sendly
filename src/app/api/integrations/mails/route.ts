@@ -1,5 +1,6 @@
 import { evervault } from "@/lib/evervault";
 import prisma from "@/lib/prisma";
+import { ParsedEmail } from "@/lib/types/email";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -54,42 +55,21 @@ export async function GET(request: NextRequest) {
 
     const decryptedEmails = await Promise.all(
       mails.map(async (email) => {
-        const encryptedFields = [
-          email.from,
-          email.to,
-          email.cc,
-          email.bcc,
-          email.subject,
-          email.messageId,
-          email.replyTo,
-          email.snippet,
-          email.threadId,
-          email.plainTextMessage,
-          email.htmlMessage,
-          ...email.attachments.map((attachment) => [
-            attachment.filename,
-            attachment.mimeType,
-            attachment.data,
-          ]),
-        ].flat();
-
-        const decryptedFields = await evervault.decrypt(encryptedFields);
-
-        let index = 0;
+        const decryptedFields: ParsedEmail = await evervault.decrypt(email);
         return {
           id: email.id,
-          from: decryptedFields[index++],
-          to: decryptedFields[index++],
-          cc: decryptedFields[index++] || null,
-          bcc: decryptedFields[index++] || null,
+          from: decryptedFields.from,
+          to: decryptedFields.to,
+          cc: decryptedFields.cc || null,
+          bcc: decryptedFields.bcc || null,
+          subject: decryptedFields.subject,
           date: email.date,
-          subject: decryptedFields[index++],
-          messageId: decryptedFields[index++],
-          replyTo: decryptedFields[index++] || null,
-          snippet: decryptedFields[index++],
-          threadId: decryptedFields[index++],
-          plainTextMessage: decryptedFields[index++],
-          htmlMessage: decryptedFields[index++],
+          messageId: decryptedFields.messageId,
+          replyTo: decryptedFields.replyTo || null,
+          snippet: decryptedFields.snippet,
+          threadId: decryptedFields.threadId,
+          plainTextMessage: decryptedFields.plainTextMessage,
+          htmlMessage: decryptedFields.htmlMessage,
           labelIds: email.labelIds,
           priorityGrade: email.priorityGrade,
           integrationId: email.integrationId,

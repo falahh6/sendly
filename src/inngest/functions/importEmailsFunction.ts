@@ -120,10 +120,11 @@ export const importEmailsFunction = inngest.createFunction(
 
             const parsedEmail = parseEmail(emailResponse.data as Email);
 
-            const encryptedEmail = await encryptEmailFields(
-              parsedEmail,
-              message.id as string
+            const encryptedEmail: ParsedEmail = await evervault.encrypt(
+              parsedEmail
             );
+
+            console.log("Encrypted Email : ", encryptedEmail);
 
             await prisma.mail.create({
               data: {
@@ -223,49 +224,3 @@ export const importEmailsFunction = inngest.createFunction(
     return { message: "Import complete" };
   }
 );
-
-export const encryptEmailFields = async (
-  parsedEmail: ParsedEmail,
-  messageId: string
-) => {
-  const fieldsToEncrypt = [
-    parsedEmail.from,
-    parsedEmail.to,
-    parsedEmail.cc,
-    parsedEmail.bcc,
-    parsedEmail.subject,
-    messageId,
-    parsedEmail.replyTo,
-    parsedEmail.snippet,
-    parsedEmail.threadId,
-    parsedEmail.plainTextMessage,
-    parsedEmail.htmlMessage,
-    ...parsedEmail.attachments.flatMap((attachment) => [
-      attachment.filename,
-      attachment.mimeType,
-      attachment.data,
-    ]),
-  ];
-
-  const encryptedFields = await evervault.encrypt(fieldsToEncrypt);
-
-  let index = 0;
-  return {
-    from: encryptedFields[index++],
-    to: encryptedFields[index++],
-    cc: encryptedFields[index++],
-    bcc: encryptedFields[index++],
-    subject: encryptedFields[index++],
-    messageId: encryptedFields[index++],
-    replyTo: encryptedFields[index++],
-    snippet: encryptedFields[index++],
-    threadId: encryptedFields[index++],
-    plainTextMessage: encryptedFields[index++],
-    htmlMessage: encryptedFields[index++],
-    attachments: parsedEmail.attachments.map((attachment) => ({
-      filename: attachment.filename,
-      mimeType: attachment.mimeType,
-      data: attachment.data,
-    })),
-  };
-};

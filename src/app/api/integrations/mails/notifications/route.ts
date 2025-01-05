@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import { gmail_v1, google } from "googleapis";
 import { parseEmail } from "@/lib/emails/utils";
-import { Email } from "@/lib/types/email";
+import { Email, ParsedEmail } from "@/lib/types/email";
 import prisma from "@/lib/prisma";
 import { Integration } from "@prisma/client";
 import { pusherServer } from "@/lib/pusher";
 import { evervault } from "@/lib/evervault";
-import { encryptEmailFields } from "@/inngest/functions/importEmailsFunction";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -131,7 +130,10 @@ const handleNewMessage = async (
 ) => {
   const parsedEmail = await fetchEmailDetails(gmail, messageId);
 
-  const encryptedEmail = await encryptEmailFields(parsedEmail, messageId);
+  const encryptedEmail: ParsedEmail = await evervault.encrypt(
+    parsedEmail,
+    messageId
+  );
 
   await prisma.mail.create({
     data: {
