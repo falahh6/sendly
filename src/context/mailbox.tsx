@@ -39,6 +39,11 @@ export function MailboxProvider({
     integrationsData || []
   );
 
+  useEffect(() => {
+    console.log("Integrations Data: ", integrationsData);
+    setIntegrations(integrationsData);
+  }, []);
+
   const value = useMemo(
     () => ({
       integrations,

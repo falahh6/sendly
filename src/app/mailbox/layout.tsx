@@ -21,6 +21,7 @@ const getIntegrations = async (authToken: string) => {
   }
 
   const data = await response.json();
+  console.log("Integrations Data: ", data);
   return data.integrations || [];
 };
 

@@ -18,9 +18,9 @@ import { AddNewIntegration } from "./_components/addNewIntegration";
 
 const Page = () => {
   const { integrations } = useIntegrations();
-  const [selectedIntegration, setSelectedIntegration] = useState<
-    string | null
-  >();
+  const [selectedIntegration, setSelectedIntegration] = useState<string | null>(
+    integrations.length > 0 ? String(integrations[0]?.id) : null
+  );
   const router = useRouter();
   const params = useSearchParams();
   const mode = params.get("m");

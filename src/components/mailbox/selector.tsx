@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Icons } from "../icons";
-import { useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader, Plus } from "lucide-react";
 import { Integration } from "@/lib/types/integrations";
@@ -25,6 +25,15 @@ export const Selector = ({
   const [isPending, startTransition] = useTransition();
 
   const { setCurrentIntegration } = useIntegrations();
+
+  useEffect(() => {
+    if (integrations.length === 0) {
+      return;
+    }
+    setCurrentIntegration(
+      integrations.find((integration) => integration.id === integrationId)
+    );
+  }, [integrations]);
 
   const valChangeHandler = (val: string) => {
     if (val === "add-new") {
