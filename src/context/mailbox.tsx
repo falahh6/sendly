@@ -35,8 +35,9 @@ export function MailboxProvider({
   const [currentIntegration, setCurrentIntegration] = useState<
     Integration | undefined
   >();
-  const [integrations, setIntegrations] =
-    useState<Integration[]>(integrationsData);
+  const [integrations, setIntegrations] = useState<Integration[]>(
+    integrationsData || []
+  );
 
   const value = useMemo(
     () => ({

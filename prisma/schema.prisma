@@ -12,65 +12,64 @@ model User {
   name              String
   email             String        @unique
   password          String
-  emailVerified      Boolean     
+  emailVerified     Boolean
   authToken         String?
-  verificationToken  String?
-  integrations      Integration[] 
-  bio   String?  
+  verificationToken String?
+  bio               String?
+  integrations      Integration[]
 
-  @@map("users") 
+  @@map("users")
 }
 
 model Integration {
-  id          Int    @id @default(autoincrement())
-  name        String
-  profile     Json   
-  accessToken String
+  id           Int     @id @default(autoincrement())
+  name         String
+  profile      Json
+  accessToken  String
   refreshToken String?
-  provider    String
-  userId      String 
-  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  email       String @unique
+  provider     String
+  userId       String
+  email        String  @unique
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Mails        Mail[]
 
-  @@map("integrations") 
-  Mails  Mail[]
+  @@map("integrations")
 }
 
 model Mail {
-  id                String              @id @default(uuid())
-  from              String
-  to                String[]
-  cc                String[]
-  bcc               String[]
-  date              DateTime?          
-  subject           String
-  messageId         String?            
-  replyTo           String?             
-  snippet           String
-  threadId          String
-  plainTextMessage  String?
-  htmlMessage       String?
-  attachments       Attachment[]        @relation("MailAttachments") 
-  labelIds          String[]
-  priorityGrade     String
-  categorization    Json?              
-  sentimentScore    Float?             
-  privacyCompliant  Boolean?            
-  category          String?
-
-  integrationId     Int                 
-  integration       Integration         @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  id               String       @id @default(uuid())
+  from             String
+  to               String[]
+  cc               String[]
+  bcc              String[]
+  date             DateTime?
+  subject          String
+  messageId        String?
+  replyTo          String?
+  snippet          String
+  threadId         String
+  plainTextMessage String?
+  htmlMessage      String?
+  labelIds         String[]
+  priorityGrade    String
+  categorization   Json?
+  sentimentScore   Float?
+  privacyCompliant Boolean?
+  category         String?
+  integrationId    Int
+  attachments      Attachment[] @relation("MailAttachments")
+  integration      Integration  @relation(fields: [integrationId], references: [id], onDelete: Cascade)
 
   @@map("mails")
 }
 
 model Attachment {
-  id          String @id @default(uuid())
-  filename     String
-  mimeType    String
-  data        String? 
-  mailId      String 
-  mail        Mail    @relation("MailAttachments", fields: [mailId], references: [id], onDelete: Cascade)
+  id       String  @id @default(uuid())
+  filename String
+  mimeType String
+  data     String?
+  mailId   String
+  mail     Mail    @relation("MailAttachments", fields: [mailId], references: [id], onDelete: Cascade)
 
   @@map("attachments")
 }

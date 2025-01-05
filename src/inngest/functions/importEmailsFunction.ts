@@ -3,8 +3,9 @@ import { google } from "googleapis";
 import { OAuth2Client } from "google-auth-library";
 import prisma from "@/lib/prisma";
 import { parseEmail } from "@/lib/emails/utils";
-import { Email } from "@/lib/types/email";
+import { Email, ParsedEmail } from "@/lib/types/email";
 import { pusherServer } from "@/lib/pusher";
+import { evervault } from "@/lib/evervault";
 
 type ProfileData = string | number | boolean;
 
@@ -21,7 +22,7 @@ export const importEmailsFunction = inngest.createFunction(
     const { integrationId } = event.data;
 
     const integration = await prisma.integration.findFirst({
-        where: { id: integrationId },
+      where: { id: integrationId },
     });
 
     console.log("Integration :  ", integration);
@@ -45,8 +46,10 @@ export const importEmailsFunction = inngest.createFunction(
     }
 
     oauth2Client.setCredentials({
-      access_token: integration.accessToken,
-      refresh_token: integration.refreshToken ?? undefined,
+      access_token: await evervault.decrypt(integration.accessToken),
+      refresh_token: await evervault.decrypt(
+        integration.refreshToken ?? undefined
+      ),
     });
 
     const gmail = google.gmail({ version: "v1", auth: oauth2Client });
@@ -117,25 +120,31 @@ export const importEmailsFunction = inngest.createFunction(
 
             const parsedEmail = parseEmail(emailResponse.data as Email);
 
+            const encryptedEmail: ParsedEmail = await evervault.encrypt(
+              parsedEmail
+            );
+
+            console.log("Encrypted Email : ", encryptedEmail);
+
             await prisma.mail.create({
               data: {
-                from: parsedEmail.from,
-                to: parsedEmail.to,
-                cc: parsedEmail.cc,
-                bcc: parsedEmail.bcc,
+                from: encryptedEmail.from,
+                to: encryptedEmail.to,
+                cc: encryptedEmail.cc,
+                bcc: encryptedEmail.bcc,
                 date: parsedEmail.date ? new Date(parsedEmail.date) : undefined,
-                subject: parsedEmail.subject,
-                messageId: message.id,
-                replyTo: parsedEmail.replyTo,
-                snippet: parsedEmail.snippet,
-                threadId: parsedEmail.threadId,
-                plainTextMessage: parsedEmail.plainTextMessage,
-                htmlMessage: parsedEmail.htmlMessage,
+                subject: encryptedEmail.subject,
+                messageId: encryptedEmail.messageId,
+                replyTo: encryptedEmail.replyTo,
+                snippet: encryptedEmail.snippet,
+                threadId: encryptedEmail.threadId,
+                plainTextMessage: encryptedEmail.plainTextMessage,
+                htmlMessage: encryptedEmail.htmlMessage,
                 labelIds: parsedEmail.labelIds,
                 priorityGrade: parsedEmail.priorityGrade,
-                integrationId: integration.id,
+                integrationId,
                 attachments: {
-                  create: parsedEmail.attachments.map((attachment) => ({
+                  create: encryptedEmail.attachments.map((attachment) => ({
                     filename: attachment.filename,
                     mimeType: attachment.mimeType,
                     data: attachment.data,
@@ -144,7 +153,7 @@ export const importEmailsFunction = inngest.createFunction(
               },
             });
 
-            if(typeof importedCount === 'number') {
+            if (typeof importedCount === "number") {
               importedCount++;
             }
 
@@ -160,7 +169,6 @@ export const importEmailsFunction = inngest.createFunction(
               },
             });
 
-            // Notify client about the progress
             pusherServer.trigger(
               `gmail-channel-${integrationId}`,
               "mail-import",
@@ -174,7 +182,7 @@ export const importEmailsFunction = inngest.createFunction(
             );
           } catch (emailError) {
             console.error(`Failed to import email ${message.id}:`, emailError);
-            // Notify client about the error
+
             pusherServer.trigger(
               `gmail-channel-${integrationId}`,
               "mail-import-error",
@@ -191,7 +199,6 @@ export const importEmailsFunction = inngest.createFunction(
       });
     }
 
-    // Step 5: Finalize Import
     await step.run("finalize-import", async () => {
       await prisma.integration.update({
         where: { id: integration.id },
@@ -205,17 +212,13 @@ export const importEmailsFunction = inngest.createFunction(
         },
       });
 
-      pusherServer.trigger(
-        `gmail-channel-${integrationId}`,
-        "mail-import",
-        {
-          body: {
-            importedEmailCount: importedCount,
-            totalEmails: messages.length,
-          },
-          message: "Import completed",
-        }
-      );
+      pusherServer.trigger(`gmail-channel-${integrationId}`, "mail-import", {
+        body: {
+          importedEmailCount: importedCount,
+          totalEmails: messages.length,
+        },
+        message: "Import completed",
+      });
     });
 
     return { message: "Import complete" };
