@@ -27,7 +27,10 @@ export const NavProfile = () => {
         </>
       ) : (
         <DropdownMenu>
-          <DropdownMenuTrigger className="border ml-[200px] max-sm:ml-0 border-gray-300 p-2 rounded-full h-fit bg-gray-100 flex flex-row items-center gap-1 ring-0 outline-none">
+          <DropdownMenuTrigger
+            disabled={!window.location.host.includes("localhost")}
+            className="border ml-[200px] max-sm:ml-0 border-gray-300 p-2 rounded-full h-fit bg-gray-100 flex flex-row items-center gap-1 ring-0 outline-none"
+          >
             {session?.user ? (
               <User className="h-4 w-4" />
             ) : (
