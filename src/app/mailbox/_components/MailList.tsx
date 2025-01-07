@@ -24,7 +24,7 @@ export const MailList = ({
   const { data: session } = useSession();
   const [selectedMail, setSelectedMail] = useState(pathname.split("/")[3]);
 
-  const { setIntegrations } = useIntegrations();
+  const { setIntegrations, setCurrentIntegration } = useIntegrations();
 
   const fetchEmails = async () => {
     try {
@@ -64,6 +64,8 @@ export const MailList = ({
     console.log("Integrations : ", integrations);
 
     if (emails) {
+      setEmailsList(emails);
+
       const updatededIntegrationsWithEmail = integrations?.map(
         (integration) => {
           if (integration.id === Number(integrationId)) {
@@ -75,7 +77,14 @@ export const MailList = ({
           return integration;
         }
       );
+
+      console.log("Updated Integrations: ", updatededIntegrationsWithEmail);
       setIntegrations(updatededIntegrationsWithEmail);
+      setCurrentIntegration(
+        updatededIntegrationsWithEmail.find(
+          (i) => i.id === Number(integrationId)
+        )
+      );
     }
 
     const channel = pusher.subscribe("gmail-channel");
@@ -87,11 +96,11 @@ export const MailList = ({
     return () => {
       pusher.unsubscribe("gmail-channel");
     };
-  }, []);
+  }, [emails]);
 
-  const sortedEmails = [...emailsList].sort(
-    (a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()
-  );
+  // const sortedEmails = [...emailsList].sort(
+  //   (a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()
+  // );
 
   return (
     <div className="h-full flex flex-col justify-between">
@@ -99,7 +108,7 @@ export const MailList = ({
         <h1 className="text-lg font-semibold p-2">Emails</h1>
       </div>
       <div className="max-h-full overflow-y-auto overflow-x-hidden">
-        {sortedEmails.map((email) => (
+        {emailsList.map((email) => (
           <div
             role="button"
             tabIndex={0}

@@ -143,7 +143,7 @@ const handleNewMessage = async (
       bcc: encryptedEmail.bcc,
       date: parsedEmail.date ? new Date(parsedEmail.date) : undefined,
       subject: encryptedEmail.subject,
-      messageId: encryptedEmail.messageId,
+      messageId: messageId,
       replyTo: encryptedEmail.replyTo,
       snippet: encryptedEmail.snippet,
       threadId: encryptedEmail.threadId,

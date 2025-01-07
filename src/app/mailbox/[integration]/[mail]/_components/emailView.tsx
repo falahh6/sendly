@@ -23,18 +23,19 @@ export const EmailView = ({ emailId }: { emailId: string }) => {
   useEffect(() => {
     console.log("Email ID: ", emailId);
     console.log("Current Integration: ", currentIntegration);
+    console.log("Integrations: ", integrations);
     const integration = integrations.find(
       (i) => i.id == currentIntegration?.id
     );
     console.log("Integration: ", integration);
-    if (integration) {
+    if (integration?.mails) {
       const selectedMail = integration.mails?.find(
-        (mail) => mail.id === emailId
+        (mail) => mail.id == emailId
       );
       console.log("Selected Mail: ", selectedMail);
       setMail(selectedMail);
     }
-  }, [integrations, currentIntegration]);
+  }, [integrations]);
 
   return (
     <div className="h-full w-full overflow-y-auto">
@@ -46,7 +47,6 @@ export const EmailView = ({ emailId }: { emailId: string }) => {
               className="rounded-xl"
               variant={"secondary"}
               onClick={() => {
-                console.log("History : ", window.history);
                 router.push("/mailbox/" + currentIntegration?.id);
               }}
             >
@@ -74,7 +74,7 @@ export const EmailView = ({ emailId }: { emailId: string }) => {
                 className="prose prose-sm max-w-none overflow-y-auto"
               />
             ) : (
-              <div>{mail?.plainTextMessage || mail?.snippet}</div>
+              <div>{mail?.plainTextMessage ?? mail?.snippet}</div>
             )}
           </div>
         </CardContent>

@@ -134,7 +134,7 @@ export const importEmailsFunction = inngest.createFunction(
                 bcc: encryptedEmail.bcc,
                 date: parsedEmail.date ? new Date(parsedEmail.date) : undefined,
                 subject: encryptedEmail.subject,
-                messageId: encryptedEmail.messageId,
+                messageId: message.id,
                 replyTo: encryptedEmail.replyTo,
                 snippet: encryptedEmail.snippet,
                 threadId: encryptedEmail.threadId,

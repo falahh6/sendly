@@ -1,7 +1,6 @@
 "use client";
 
 import { Integration } from "@/lib/types/integrations";
-import { usePathname } from "next/navigation";
 import {
   createContext,
   useContext,
@@ -10,7 +9,6 @@ import {
   Dispatch,
   SetStateAction,
   useMemo,
-  useEffect,
 } from "react";
 
 interface IntegrationContextType {
@@ -31,7 +29,6 @@ export function MailboxProvider({
   children: ReactNode;
   integrationsData: Integration[];
 }>) {
-  const pathname = usePathname();
   const [currentIntegration, setCurrentIntegration] = useState<
     Integration | undefined
   >();
@@ -39,10 +36,20 @@ export function MailboxProvider({
     integrationsData || []
   );
 
-  useEffect(() => {
-    console.log("Integrations Data: ", integrationsData);
-    setIntegrations(integrationsData);
-  }, []);
+  // useEffect(() => {
+  //   console.log("Integrations Data: ", integrationsData);
+  //   setIntegrations(integrationsData);
+  // }, []);
+
+  // const value = useMemo(
+  //   () => ({
+  //     integrations,
+  //     currentIntegration,
+  //     setCurrentIntegration,
+  //     setIntegrations,
+  //   }),
+  //   [integrations, currentIntegration, setCurrentIntegration, setIntegrations]
+  // );
 
   const value = useMemo(
     () => ({
@@ -54,14 +61,17 @@ export function MailboxProvider({
     [integrations, currentIntegration, setCurrentIntegration, setIntegrations]
   );
 
-  useEffect(() => {
-    console.log("ALl integrations: ", integrations);
-    setCurrentIntegration(
-      integrations.find(
-        (i: Integration) => i.id === Number(pathname.split("/")[2])
-      )
-    );
-  }, [integrations]);
+  // useEffect(() => {
+  //   console.log("ALl integrations: ", integrations);
+
+  //   const selectedIntegration = integrations.find(
+  //     (i: Integration) => i.id === Number(pathname.split("/")[2])
+  //   );
+
+  //   if (!selectedIntegration?.mails) {
+  //     setCurrentIntegration(selectedIntegration);
+  //   }
+  // }, []);
 
   return (
     <IntegrationContext.Provider value={value}>
