@@ -2,8 +2,6 @@ import { google } from "googleapis";
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
-// import { parseEmail } from "@/lib/emails/utils";
-// import { Email } from "@/lib/types/email";
 
 const auth = new google.auth.OAuth2({
   clientId: process.env.GOOGLE_CID,
@@ -37,24 +35,10 @@ export async function GET(req: NextRequest) {
 
     console.log("RESULTS : ", result.status, result.statusText, result.data);
 
-    // const messages = result.data.messages ?? [];
-
-    // const emailDetailsPromises = messages.map(async (message) => {
-    //   const messageDetails = await gmail.users.messages.get({
-    //     userId: "me",
-    //     id: message.id ?? "",
-    //   });
-    //   return parseEmail(messageDetails.data as Email);
-    // });
-
-    // const emailDetails = await Promise.all(emailDetailsPromises);
-
     const filePath = path.join(process.cwd(), "emailDetails.json");
 
     const emailDetailsRaw = await fs.readFile(filePath, "utf-8");
     const emailDetails = JSON.parse(emailDetailsRaw);
-
-    // console.log("EMAIL DETAILS (length): ", emailDetails?.length);
 
     return NextResponse.json({
       status: 200,

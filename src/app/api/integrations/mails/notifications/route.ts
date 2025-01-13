@@ -4,8 +4,8 @@ import { parseEmail } from "@/lib/emails/utils";
 import { Email, ParsedEmail } from "@/lib/types/email";
 import prisma from "@/lib/prisma";
 import { Integration } from "@prisma/client";
-import { pusherServer } from "@/lib/pusher";
 import { evervault } from "@/lib/evervault";
+import { ablyServer } from "@/lib/ably";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -78,12 +78,18 @@ export async function POST(request: Request) {
       }
     }
 
-    pusherServer.trigger("gmail-channel", "new-email", {
+    // pusherServer.trigger("gmail-channel", "new-email", {
+    //   body: "email updates",
+    // });
+
+    const channel = ablyServer.channels.get(`gmail-channel-${integration.id}`);
+    await channel.publish("new-email", {
       body: "email updates",
     });
 
     await updateIntegrationHistoryId(
       integration.id,
+      profileData,
       historyData.data.historyId!
     );
 
@@ -184,12 +190,14 @@ const handleLabelChange = async (gmail: gmail_v1.Gmail, messageId: string) => {
 
 const updateIntegrationHistoryId = async (
   integrationId: number,
+  profileData: Record<string, string | number | boolean>,
   newHistoryId: string
 ) => {
   await prisma.integration.update({
     where: { id: integrationId },
     data: {
       profile: {
+        ...profileData,
         historyId: newHistoryId,
       },
     },

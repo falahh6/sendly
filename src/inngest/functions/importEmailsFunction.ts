@@ -4,8 +4,8 @@ import { OAuth2Client } from "google-auth-library";
 import prisma from "@/lib/prisma";
 import { parseEmail } from "@/lib/emails/utils";
 import { Email, ParsedEmail } from "@/lib/types/email";
-import { pusherServer } from "@/lib/pusher";
 import { evervault } from "@/lib/evervault";
+import { ablyServer } from "@/lib/ably";
 
 type ProfileData = string | number | boolean;
 
@@ -21,6 +21,10 @@ export const importEmailsFunction = inngest.createFunction(
   async ({ event, step }) => {
     const { integrationId } = event.data;
 
+    const channel = ablyServer.channels.get(`gmail-channel-${integrationId}`);
+
+    console.log("channel : ", channel);
+
     const integration = await prisma.integration.findFirst({
       where: { id: integrationId },
     });
@@ -28,7 +32,10 @@ export const importEmailsFunction = inngest.createFunction(
     console.log("Integration :  ", integration);
 
     if (!integration) {
-      pusherServer.trigger(`gmail-channel-${integrationId}`, "mail-import", {
+      // pusherServer.trigger(`gmail-channel-${integrationId}`, "mail-import", {
+      //   message: "No integration found",
+      // });
+      await channel.publish("mail-import", {
         message: "No integration found",
       });
       return {
@@ -39,7 +46,10 @@ export const importEmailsFunction = inngest.createFunction(
     const profile = integration.profile as Record<string, ProfileData>;
 
     if (profile?.isComplete) {
-      pusherServer.trigger(`gmail-channel-${integrationId}`, "mail-import", {
+      // pusherServer.trigger(`gmail-channel-${integrationId}`, "mail-import", {
+      //   message: "Import already completed",
+      // });
+      await channel.publish("mail-import", {
         message: "Import already completed",
       });
       return { error: "Import completed" };
@@ -82,7 +92,12 @@ export const importEmailsFunction = inngest.createFunction(
     });
 
     await step.run("import-started", async () => {
-      pusherServer.trigger(`gmail-channel-${integrationId}`, "mail-import", {
+      // pusherServer.trigger(`gmail-channel-${integrationId}`, "mail-import", {
+      //   message: "Import started",
+      //   totalEmails: messages.length,
+      // });
+
+      await channel.publish("mail-import", {
         message: "Import started",
         totalEmails: messages.length,
       });
@@ -169,31 +184,47 @@ export const importEmailsFunction = inngest.createFunction(
               },
             });
 
-            pusherServer.trigger(
-              `gmail-channel-${integrationId}`,
-              "mail-import",
-              {
-                body: {
-                  importedEmailCount: importedCount,
-                  totalEmails: messages.length,
-                },
-                message: "Import in progress",
-              }
-            );
+            // pusherServer.trigger(
+            //   `gmail-channel-${integrationId}`,
+            //   "mail-import",
+            //   {
+            //     body: {
+            //       importedEmailCount: importedCount,
+            //       totalEmails: messages.length,
+            //     },
+            //     message: "Import in progress",
+            //   }
+            // );
+
+            await channel.publish("mail-import", {
+              body: {
+                importedEmailCount: importedCount,
+                totalEmails: messages.length,
+              },
+              message: "Import in progress",
+            });
           } catch (emailError) {
             console.error(`Failed to import email ${message.id}:`, emailError);
 
-            pusherServer.trigger(
-              `gmail-channel-${integrationId}`,
-              "mail-import-error",
-              {
-                messageId: message.id,
-                error:
-                  emailError instanceof Error
-                    ? emailError.message
-                    : "Unknown error",
-              }
-            );
+            // pusherServer.trigger(
+            //   `gmail-channel-${integrationId}`,
+            //   "mail-import-error",
+            //   {
+            //     messageId: message.id,
+            //     error:
+            //       emailError instanceof Error
+            //         ? emailError.message
+            //         : "Unknown error",
+            //   }
+            // );
+
+            await channel.publish("mail-import-error", {
+              messageId: message.id,
+              error:
+                emailError instanceof Error
+                  ? emailError.message
+                  : "Unknown error",
+            });
           }
         }
       });
@@ -212,7 +243,15 @@ export const importEmailsFunction = inngest.createFunction(
         },
       });
 
-      pusherServer.trigger(`gmail-channel-${integrationId}`, "mail-import", {
+      // pusherServer.trigger(`gmail-channel-${integrationId}`, "mail-import", {
+      //   body: {
+      //     importedEmailCount: importedCount,
+      //     totalEmails: messages.length,
+      //   },
+      //   message: "Import completed",
+      // });
+
+      await channel.publish("mail-import", {
         body: {
           importedEmailCount: importedCount,
           totalEmails: messages.length,

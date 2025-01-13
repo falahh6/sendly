@@ -65,7 +65,7 @@ const MailboxLayout = async ({
     redirect("/mailbox/?m=add-new");
   }
 
-  console.log("Integrations : ", integrationsData);
+  console.log("Integrations -> : ", integrationsData);
 
   if (
     integrationsData?.find(
@@ -79,6 +79,8 @@ const MailboxLayout = async ({
     session?.accessToken ?? "",
     params.integration
   );
+
+  console.log("Emails: ", emails);
 
   return (
     <>
@@ -139,6 +141,11 @@ const MailboxLayout = async ({
               <ImportEmails
                 emails={emails}
                 integrationId={params.integration}
+                integrationProfiles={
+                  integrationsData?.find(
+                    (i: Integration) => i.id == Number(params.integration)
+                  )?.profile
+                }
               />
             )}
           </ResizablePanel>
