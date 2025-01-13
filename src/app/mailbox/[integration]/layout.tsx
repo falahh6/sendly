@@ -80,8 +80,6 @@ const MailboxLayout = async ({
     params.integration
   );
 
-  console.log("Emails: ", emails);
-
   return (
     <>
       <div className="flex flex-row items-center justify-between p-2 h-[8vh] w-full">

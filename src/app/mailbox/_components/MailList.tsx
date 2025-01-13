@@ -42,8 +42,12 @@ export const MailList = ({
 
       const data = await response.json();
       if (data.mails) {
-        console.log("Emails: ", data.mails.length);
-        setEmailsList(data.mails);
+        const sortedEmails = data.mails.sort(
+          (a: ParsedEmail, b: ParsedEmail) =>
+            new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()
+        );
+
+        setEmailsList(sortedEmails);
       }
     } catch (error) {
       console.error("Error fetching emails:", error);
@@ -69,14 +73,19 @@ export const MailList = ({
     console.log("Integrations : ", integrations);
 
     if (emails) {
-      setEmailsList(emails);
+      const sortedEmails = emails.sort(
+        (a: ParsedEmail, b: ParsedEmail) =>
+          new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()
+      );
+
+      setEmailsList(sortedEmails);
 
       const updatededIntegrationsWithEmail = integrations?.map(
         (integration) => {
           if (integration.id === Number(integrationId)) {
             return {
               ...integration,
-              mails: emails,
+              mails: sortedEmails,
             };
           }
           return integration;

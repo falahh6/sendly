@@ -15,11 +15,13 @@ export async function POST(request: Request) {
     Buffer.from(body.message.data, "base64").toString("utf-8")
   );
 
+  console.log("Decoded Data: ", decodedData);
+
   try {
     if (!decodedData.emailAddress || !decodedData.historyId) {
       return NextResponse.json(
         { error: "Email address or history ID not provided" },
-        { status: 400 }
+        { status: 200 }
       );
     }
 
@@ -37,7 +39,7 @@ export async function POST(request: Request) {
     if (!integration) {
       return NextResponse.json(
         { error: "Integration not found" },
-        { status: 404 }
+        { status: 200 }
       );
     }
 
@@ -136,10 +138,7 @@ const handleNewMessage = async (
 ) => {
   const parsedEmail = await fetchEmailDetails(gmail, messageId);
 
-  const encryptedEmail: ParsedEmail = await evervault.encrypt(
-    parsedEmail,
-    messageId
-  );
+  const encryptedEmail: ParsedEmail = await evervault.encrypt(parsedEmail);
 
   await prisma.mail.create({
     data: {
