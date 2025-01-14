@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { pusherClient } from "@/lib/pusher";
 import { ParsedEmail } from "@/lib/types/email";
+import { ablyClient } from "@/lib/ably";
 
 export const ImportEmails = ({
   integrationId,
@@ -66,62 +67,58 @@ export const ImportEmails = ({
   };
 
   let init = false;
+
+  const gmailChannel = ablyClient(`gmail-channel-${integrationId}`);
+
   useEffect(() => {
+    console.log("Integration profiles: ", integrationProfiles);
     if (!init) {
       if (
         integrationProfiles?.isImportProcessing ||
         (!integrationProfiles?.isImportCancelled &&
           !integrationProfiles?.importComplete)
       ) {
-        const importChannel = pusherClient.subscribe(
-          `gmail-channel-${integrationId}`
-        );
+        console.log(gmailChannel);
 
-        console.log(importChannel);
-
-        importChannel.bind(
-          "mail-import",
-          (
-            data:
-              | {
-                  body: {
-                    totalEmails: number;
-                    importedEmailCount: number;
-                    importComplete: boolean;
-                  };
-                  message: string;
-                }
-              | {
-                  message: string;
-                }
-          ) => {
-            console.log("Import data: ", data);
-            if ("body" in data) {
-              if (
-                (data.body.totalEmails === data.body.importedEmailCount ||
-                  data.body.importComplete) &&
-                type !== "nav"
-              ) {
-                window.location.reload();
+        gmailChannel.subscribe("mail-import", (message) => {
+          const data = message.data as
+            | {
+                body: {
+                  totalEmails: number;
+                  importedEmailCount: number;
+                  importComplete: boolean;
+                };
+                message: string;
               }
-              setImportStatus((prev) => ({
-                ...prev,
-                totalEmails: data.body.totalEmails,
-                importedCount: data.body.importedEmailCount,
-                isComplete: data.body.importComplete,
-              }));
-            }
-
-            if ("body" in data && data.body.importComplete && type !== "nav") {
+            | {
+                message: string;
+              };
+          console.log("Import data: ", data);
+          if ("body" in data) {
+            if (
+              (data.body.totalEmails === data.body.importedEmailCount ||
+                data.body.importComplete) &&
+              type !== "nav"
+            ) {
               window.location.reload();
-              importChannel.unbind("mail-import");
-              pusherClient.unsubscribe(`gmail-channel-${integrationId}`);
             }
+            setImportStatus((prev) => ({
+              ...prev,
+              totalEmails: data.body.totalEmails,
+              importedCount: data.body.importedEmailCount,
+              isComplete: data.body.importComplete,
+            }));
           }
-        );
+
+          if ("body" in data && data.body.importComplete && type !== "nav") {
+            window.location.reload();
+            gmailChannel.unsubscribe("mail-import");
+            pusherClient.unsubscribe(`gmail-channel-${integrationId}`);
+          }
+        });
 
         return () => {
-          importChannel.unbind("mail-import");
+          gmailChannel.unsubscribe("mail-import");
           pusherClient.unsubscribe(`gmail-channel-${integrationId}`);
         };
       }
@@ -187,6 +184,7 @@ export const ImportEmails = ({
             to our db.
           </p>
         </div>
+        <div>{JSON.stringify(integrationProfiles)}</div>
         <div className="mt-2 flex flex-row gap-2 items-center w-full">
           {importStatus.totalEmails !== 0 && !importStatus.isComplete ? (
             <div className="p-2 px-4 bg-neutral-100 w-full rounded-lg text-xs font-[550]">

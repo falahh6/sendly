@@ -37,6 +37,16 @@ export const EmailView = ({ emailId }: { emailId: string }) => {
     }
   }, [integrations]);
 
+  useEffect(() => {
+    const integration = integrations.find(
+      (i) => i.id == currentIntegration?.id
+    );
+    const selectedMail =
+      integration && integration.mails?.find((mail) => mail.id == emailId);
+    console.log("Selected Mail: ", selectedMail);
+    setMail(selectedMail);
+  }, [emailId]);
+
   return (
     <div className="h-full w-full overflow-y-auto">
       <Card className="max-w-2xl mx-auto">

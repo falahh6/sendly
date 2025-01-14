@@ -4,8 +4,8 @@ import { parseEmail } from "@/lib/emails/utils";
 import { Email, ParsedEmail } from "@/lib/types/email";
 import prisma from "@/lib/prisma";
 import { Integration } from "@prisma/client";
-import { pusherServer } from "@/lib/pusher";
 import { evervault } from "@/lib/evervault";
+import { ablyServer } from "@/lib/ably";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -15,11 +15,13 @@ export async function POST(request: Request) {
     Buffer.from(body.message.data, "base64").toString("utf-8")
   );
 
+  console.log("Decoded Data: ", decodedData);
+
   try {
     if (!decodedData.emailAddress || !decodedData.historyId) {
       return NextResponse.json(
         { error: "Email address or history ID not provided" },
-        { status: 400 }
+        { status: 200 }
       );
     }
 
@@ -37,7 +39,7 @@ export async function POST(request: Request) {
     if (!integration) {
       return NextResponse.json(
         { error: "Integration not found" },
-        { status: 404 }
+        { status: 200 }
       );
     }
 
@@ -78,12 +80,18 @@ export async function POST(request: Request) {
       }
     }
 
-    pusherServer.trigger("gmail-channel", "new-email", {
+    // pusherServer.trigger("gmail-channel", "new-email", {
+    //   body: "email updates",
+    // });
+
+    const channel = ablyServer.channels.get(`gmail-channel-${integration.id}`);
+    await channel.publish("new-email", {
       body: "email updates",
     });
 
     await updateIntegrationHistoryId(
       integration.id,
+      profileData,
       historyData.data.historyId!
     );
 
@@ -130,10 +138,7 @@ const handleNewMessage = async (
 ) => {
   const parsedEmail = await fetchEmailDetails(gmail, messageId);
 
-  const encryptedEmail: ParsedEmail = await evervault.encrypt(
-    parsedEmail,
-    messageId
-  );
+  const encryptedEmail: ParsedEmail = await evervault.encrypt(parsedEmail);
 
   await prisma.mail.create({
     data: {
@@ -184,12 +189,14 @@ const handleLabelChange = async (gmail: gmail_v1.Gmail, messageId: string) => {
 
 const updateIntegrationHistoryId = async (
   integrationId: number,
+  profileData: Record<string, string | number | boolean>,
   newHistoryId: string
 ) => {
   await prisma.integration.update({
     where: { id: integrationId },
     data: {
       profile: {
+        ...profileData,
         historyId: newHistoryId,
       },
     },

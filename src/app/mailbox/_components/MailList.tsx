@@ -4,10 +4,11 @@ import { ParsedEmail } from "@/lib/types/email";
 import { cn, removeNoreplyEmail } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import Pusher from "pusher-js";
 import { useSession } from "next-auth/react";
 import { useIntegrations } from "@/context/mailbox";
 import { Integration } from "@/lib/types/integrations";
+
+import { ablyClient } from "@/lib/ably";
 
 export const MailList = ({
   emails,
@@ -40,8 +41,14 @@ export const MailList = ({
       );
 
       const data = await response.json();
-      console.log("Emails: ", data.mails);
-      setEmailsList(data.mails);
+      if (data.mails) {
+        const sortedEmails = data.mails.sort(
+          (a: ParsedEmail, b: ParsedEmail) =>
+            new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()
+        );
+
+        setEmailsList(sortedEmails);
+      }
     } catch (error) {
       console.error("Error fetching emails:", error);
     }
@@ -54,9 +61,11 @@ export const MailList = ({
     router.push(`/mailbox/${mailboxId}/${id}`);
   };
 
-  const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
-    cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
-  });
+  // const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+  //   cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+  // });
+
+  const gmailChannel = ablyClient(`gmail-channel-${integrationId}`);
 
   useEffect(() => {
     console.log("Emails: ", emails);
@@ -64,14 +73,19 @@ export const MailList = ({
     console.log("Integrations : ", integrations);
 
     if (emails) {
-      setEmailsList(emails);
+      const sortedEmails = emails.sort(
+        (a: ParsedEmail, b: ParsedEmail) =>
+          new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()
+      );
+
+      setEmailsList(sortedEmails);
 
       const updatededIntegrationsWithEmail = integrations?.map(
         (integration) => {
           if (integration.id === Number(integrationId)) {
             return {
               ...integration,
-              mails: emails,
+              mails: sortedEmails,
             };
           }
           return integration;
@@ -87,14 +101,22 @@ export const MailList = ({
       );
     }
 
-    const channel = pusher.subscribe("gmail-channel");
-    channel.bind("new-email", (data: { body: string; messageId: string }) => {
+    console.log("CHANNEL : ", gmailChannel);
+
+    gmailChannel.subscribe(`new-email`, (data) => {
       console.log("New Email: ", data);
       fetchEmails();
       router.refresh();
     });
+
+    // const channel = pusher.subscribe("gmail-channel");
+    // channel.bind("new-email", (data: { body: string; messageId: string }) => {
+    //   console.log("New Email: ", data);
+    //   fetchEmails();
+    //   router.refresh();
+    // });
     return () => {
-      pusher.unsubscribe("gmail-channel");
+      gmailChannel.unsubscribe(`new-email`);
     };
   }, [emails]);
 

@@ -30,8 +30,6 @@ const MailboxLayout = async ({ children }: { children: React.ReactNode }) => {
 
   const integrations = await getIntegrations(data?.accessToken ?? "");
 
-  console.log("Integrations: ", integrations);
-
   return (
     <MailboxProvider integrationsData={integrations}>
       <main className="w-full bg-white flex flex-row text-sm md:text-base">
