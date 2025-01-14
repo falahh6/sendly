@@ -47,6 +47,26 @@ export const MailList = ({
             new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()
         );
 
+        const updatededIntegrationsWithEmail = integrations?.map(
+          (integration) => {
+            if (integration.id === Number(integrationId)) {
+              return {
+                ...integration,
+                mails: sortedEmails,
+              };
+            }
+            return integration;
+          }
+        );
+
+        console.log("Updated Integrations: ", updatededIntegrationsWithEmail);
+        setIntegrations(updatededIntegrationsWithEmail);
+        setCurrentIntegration(
+          updatededIntegrationsWithEmail.find(
+            (i) => i.id === Number(integrationId)
+          )
+        );
+
         setEmailsList(sortedEmails);
       }
     } catch (error) {
@@ -119,10 +139,6 @@ export const MailList = ({
       gmailChannel.unsubscribe(`new-email`);
     };
   }, [emails]);
-
-  // const sortedEmails = [...emailsList].sort(
-  //   (a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()
-  // );
 
   return (
     <div className="h-full flex flex-col justify-between">
