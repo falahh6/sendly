@@ -22,13 +22,11 @@ export const NavProfile = () => {
   return (
     <div className="flex flex-row items-center gap-4 absolute right-6 top-6">
       {isPending || status === "loading" ? (
-        <>
-          <Loader className="h-4 w-4 animate-spin" />
-        </>
+        <Loader className="h-4 w-4 animate-spin" />
       ) : (
         <DropdownMenu>
           <DropdownMenuTrigger
-            disabled={!window.location.host.includes("localhost")}
+            // disabled={!window.location.host.includes("localhost")}
             className="border ml-[200px] max-sm:ml-0 border-gray-300 p-2 rounded-full h-fit bg-gray-100 flex flex-row items-center gap-1 ring-0 outline-none"
           >
             {session?.user ? (

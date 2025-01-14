@@ -184,7 +184,6 @@ export const ImportEmails = ({
             to our db.
           </p>
         </div>
-        <div>{JSON.stringify(integrationProfiles)}</div>
         <div className="mt-2 flex flex-row gap-2 items-center w-full">
           {importStatus.totalEmails !== 0 && !importStatus.isComplete ? (
             <div className="p-2 px-4 bg-neutral-100 w-full rounded-lg text-xs font-[550]">
