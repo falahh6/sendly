@@ -53,6 +53,17 @@ export async function POST(request: Request) {
 
     const historyRecords = historyData.data.history || [];
 
+    console.log("History Records: ", historyRecords);
+
+    if (historyRecords.length !== 0) {
+      const channel = ablyServer.channels.get(
+        `gmail-channel-${integration.id}`
+      );
+      await channel.publish("new-email", {
+        body: "email updates",
+      });
+    }
+
     for (const record of historyRecords) {
       if (record.messagesAdded) {
         for (const msg of record.messagesAdded) {
@@ -79,15 +90,6 @@ export async function POST(request: Request) {
         }
       }
     }
-
-    // pusherServer.trigger("gmail-channel", "new-email", {
-    //   body: "email updates",
-    // });
-
-    const channel = ablyServer.channels.get(`gmail-channel-${integration.id}`);
-    await channel.publish("new-email", {
-      body: "email updates",
-    });
 
     await updateIntegrationHistoryId(
       integration.id,
@@ -136,8 +138,17 @@ const handleNewMessage = async (
   integrationId: number,
   messageId: string
 ) => {
-  const parsedEmail = await fetchEmailDetails(gmail, messageId);
+  const existingEmail = await prisma.mail.findFirst({
+    where: {
+      messageId,
+    },
+  });
 
+  if (existingEmail) {
+    return;
+  }
+
+  const parsedEmail = await fetchEmailDetails(gmail, messageId);
   const encryptedEmail: ParsedEmail = await evervault.encrypt(parsedEmail);
 
   await prisma.mail.create({
