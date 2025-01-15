@@ -81,10 +81,6 @@ export const MailList = ({
     router.push(`/mailbox/${mailboxId}/${id}`);
   };
 
-  // const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
-  //   cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
-  // });
-
   const gmailChannel = ablyClient(`gmail-channel-${integrationId}`);
 
   useEffect(() => {
@@ -126,15 +122,8 @@ export const MailList = ({
     gmailChannel.subscribe(`new-email`, (data) => {
       console.log("New Email: ", data);
       fetchEmails();
-      router.refresh();
     });
 
-    // const channel = pusher.subscribe("gmail-channel");
-    // channel.bind("new-email", (data: { body: string; messageId: string }) => {
-    //   console.log("New Email: ", data);
-    //   fetchEmails();
-    //   router.refresh();
-    // });
     return () => {
       gmailChannel.unsubscribe(`new-email`);
     };

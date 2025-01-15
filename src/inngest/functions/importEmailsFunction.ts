@@ -32,9 +32,6 @@ export const importEmailsFunction = inngest.createFunction(
     console.log("Integration :  ", integration);
 
     if (!integration) {
-      // pusherServer.trigger(`gmail-channel-${integrationId}`, "mail-import", {
-      //   message: "No integration found",
-      // });
       await channel.publish("mail-import", {
         message: "No integration found",
       });
@@ -46,9 +43,6 @@ export const importEmailsFunction = inngest.createFunction(
     const profile = integration.profile as Record<string, ProfileData>;
 
     if (profile?.isComplete) {
-      // pusherServer.trigger(`gmail-channel-${integrationId}`, "mail-import", {
-      //   message: "Import already completed",
-      // });
       await channel.publish("mail-import", {
         message: "Import already completed",
       });
@@ -92,11 +86,6 @@ export const importEmailsFunction = inngest.createFunction(
     });
 
     await step.run("import-started", async () => {
-      // pusherServer.trigger(`gmail-channel-${integrationId}`, "mail-import", {
-      //   message: "Import started",
-      //   totalEmails: messages.length,
-      // });
-
       await channel.publish("mail-import", {
         message: "Import started",
         totalEmails: messages.length,
@@ -184,18 +173,6 @@ export const importEmailsFunction = inngest.createFunction(
               },
             });
 
-            // pusherServer.trigger(
-            //   `gmail-channel-${integrationId}`,
-            //   "mail-import",
-            //   {
-            //     body: {
-            //       importedEmailCount: importedCount,
-            //       totalEmails: messages.length,
-            //     },
-            //     message: "Import in progress",
-            //   }
-            // );
-
             await channel.publish("mail-import", {
               body: {
                 importedEmailCount: importedCount,
@@ -205,18 +182,6 @@ export const importEmailsFunction = inngest.createFunction(
             });
           } catch (emailError) {
             console.error(`Failed to import email ${message.id}:`, emailError);
-
-            // pusherServer.trigger(
-            //   `gmail-channel-${integrationId}`,
-            //   "mail-import-error",
-            //   {
-            //     messageId: message.id,
-            //     error:
-            //       emailError instanceof Error
-            //         ? emailError.message
-            //         : "Unknown error",
-            //   }
-            // );
 
             await channel.publish("mail-import-error", {
               messageId: message.id,
@@ -242,14 +207,6 @@ export const importEmailsFunction = inngest.createFunction(
           },
         },
       });
-
-      // pusherServer.trigger(`gmail-channel-${integrationId}`, "mail-import", {
-      //   body: {
-      //     importedEmailCount: importedCount,
-      //     totalEmails: messages.length,
-      //   },
-      //   message: "Import completed",
-      // });
 
       await channel.publish("mail-import", {
         body: {

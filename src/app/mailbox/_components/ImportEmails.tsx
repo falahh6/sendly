@@ -10,7 +10,6 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { pusherClient } from "@/lib/pusher";
 import { ParsedEmail } from "@/lib/types/email";
 import { ablyClient } from "@/lib/ably";
 
@@ -113,13 +112,11 @@ export const ImportEmails = ({
           if ("body" in data && data.body.importComplete && type !== "nav") {
             window.location.reload();
             gmailChannel.unsubscribe("mail-import");
-            pusherClient.unsubscribe(`gmail-channel-${integrationId}`);
           }
         });
 
         return () => {
           gmailChannel.unsubscribe("mail-import");
-          pusherClient.unsubscribe(`gmail-channel-${integrationId}`);
         };
       }
       init = true;

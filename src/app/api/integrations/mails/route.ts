@@ -53,9 +53,31 @@ export async function GET(request: NextRequest) {
 
     const totalPages = Math.ceil(totalMails / pageSize);
 
-    const decryptedEmails = await Promise.all(
-      mails.map(async (email) => {
-        const decryptedFields: ParsedEmail = await evervault.decrypt(email);
+    // Prepare the batch of fields to decrypt
+    const batchToDecrypt = mails.map((email) => ({
+      id: email.id,
+      from: email.from,
+      to: email.to,
+      cc: email.cc,
+      bcc: email.bcc,
+      subject: email.subject,
+      replyTo: email.replyTo,
+      snippet: email.snippet,
+      threadId: email.threadId,
+      plainTextMessage: email.plainTextMessage,
+      htmlMessage: email.htmlMessage,
+      attachments: email.attachments.map((attachment) => ({
+        filename: attachment.filename,
+        mimeType: attachment.mimeType,
+        data: attachment.data,
+      })),
+    }));
+
+    const decryptedBatch = await evervault.decrypt(batchToDecrypt);
+
+    const decryptedEmails = decryptedBatch.map(
+      (decryptedFields: ParsedEmail, index: number) => {
+        const email = mails[index];
         return {
           id: email.id,
           from: decryptedFields.from,
@@ -73,13 +95,9 @@ export async function GET(request: NextRequest) {
           labelIds: email.labelIds,
           priorityGrade: email.priorityGrade,
           integrationId: email.integrationId,
-          attachments: email.attachments.map((attachment) => ({
-            filename: attachment.filename,
-            mimeType: attachment.mimeType,
-            data: attachment.data,
-          })),
+          attachments: decryptedFields.attachments,
         };
-      })
+      }
     );
 
     return NextResponse.json(
