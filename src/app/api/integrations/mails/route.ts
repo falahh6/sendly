@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
           bcc: decryptedFields.bcc || null,
           subject: decryptedFields.subject,
           date: email.date,
-          messageId: email.id,
+          messageId: email.messageId,
           replyTo: decryptedFields.replyTo || null,
           snippet: decryptedFields.snippet,
           threadId: decryptedFields.threadId,

@@ -21,9 +21,6 @@ export const EmailView = ({ emailId }: { emailId: string }) => {
   const router = useRouter();
 
   useEffect(() => {
-    console.log("Email ID: ", emailId);
-    console.log("Current Integration: ", currentIntegration);
-    console.log("Integrations: ", integrations);
     const integration = integrations.find(
       (i) => i.id == currentIntegration?.id
     );
@@ -32,7 +29,6 @@ export const EmailView = ({ emailId }: { emailId: string }) => {
       const selectedMail = integration.mails?.find(
         (mail) => mail.id == emailId
       );
-      console.log("Selected Mail: ", selectedMail);
       setMail(selectedMail);
     }
   }, [integrations]);

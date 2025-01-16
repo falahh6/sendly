@@ -6,6 +6,7 @@ import prisma from "@/lib/prisma";
 import { Integration } from "@prisma/client";
 import { evervault } from "@/lib/evervault";
 import { ablyServer } from "@/lib/ably";
+import { Channel } from "ably";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -55,41 +56,43 @@ export async function POST(request: Request) {
 
     console.log("History Records: ", historyRecords);
 
-    if (historyRecords.length !== 0) {
-      const channel = ablyServer.channels.get(
-        `gmail-channel-${integration.id}`
-      );
-      await channel.publish("new-email", {
-        body: "email updates",
-      });
-    }
+    const channel = ablyServer.channels.get(`gmail-channel-${integration.id}`);
 
-    for (const record of historyRecords) {
+    historyRecords.forEach(async (record) => {
       if (record.messagesAdded) {
+        console.log("Messages Added: ", record.messagesAdded);
         for (const msg of record.messagesAdded) {
           if (msg.message?.id)
-            await handleNewMessage(gmail, integration.id, msg.message.id);
+            await handleNewMessage(
+              gmail,
+              integration.id,
+              msg.message.id,
+              channel
+            );
         }
       }
 
       if (record.messagesDeleted) {
         for (const msg of record.messagesDeleted) {
-          if (msg.message?.id) await handleDeletedMessage(msg.message.id);
+          if (msg.message?.id)
+            await handleDeletedMessage(msg.message.id, channel);
         }
       }
 
       if (record.labelsAdded) {
         for (const msg of record.labelsAdded) {
-          if (msg.message?.id) await handleLabelChange(gmail, msg.message.id);
+          if (msg.message?.id)
+            await handleLabelChange(gmail, msg.message.id, channel);
         }
       }
 
       if (record.labelsRemoved) {
         for (const msg of record.labelsRemoved) {
-          if (msg.message?.id) await handleLabelChange(gmail, msg.message.id);
+          if (msg.message?.id)
+            await handleLabelChange(gmail, msg.message.id, channel);
         }
       }
-    }
+    });
 
     await updateIntegrationHistoryId(
       integration.id,
@@ -136,56 +139,81 @@ const fetchEmailDetails = async (gmail: gmail_v1.Gmail, messageId: string) => {
 const handleNewMessage = async (
   gmail: gmail_v1.Gmail,
   integrationId: number,
-  messageId: string
+  messageId: string,
+  channel: Channel
 ) => {
+  console.log("Handling new message: ", messageId);
   const existingEmail = await prisma.mail.findFirst({
     where: {
       messageId,
     },
   });
 
-  if (existingEmail) {
-    return;
-  }
+  if (existingEmail === null) {
+    const parsedEmail = await fetchEmailDetails(gmail, messageId);
+    console.log("Parsed Email: ", parsedEmail);
 
-  const parsedEmail = await fetchEmailDetails(gmail, messageId);
-  const encryptedEmail: ParsedEmail = await evervault.encrypt(parsedEmail);
+    try {
+      const encryptedEmail: ParsedEmail = await evervault.encrypt(parsedEmail);
+      console.log("Encrypted Email: ", encryptedEmail);
 
-  await prisma.mail.create({
-    data: {
-      from: encryptedEmail.from,
-      to: encryptedEmail.to,
-      cc: encryptedEmail.cc,
-      bcc: encryptedEmail.bcc,
-      date: parsedEmail.date ? new Date(parsedEmail.date) : undefined,
-      subject: encryptedEmail.subject,
-      messageId: messageId,
-      replyTo: encryptedEmail.replyTo,
-      snippet: encryptedEmail.snippet,
-      threadId: encryptedEmail.threadId,
-      plainTextMessage: encryptedEmail.plainTextMessage,
-      htmlMessage: encryptedEmail.htmlMessage,
-      labelIds: parsedEmail.labelIds,
-      priorityGrade: parsedEmail.priorityGrade,
-      integrationId,
-      attachments: {
-        create: encryptedEmail.attachments.map((attachment) => ({
-          filename: attachment.filename,
-          mimeType: attachment.mimeType,
-          data: attachment.data,
-        })),
+      await prisma.mail.create({
+        data: {
+          from: encryptedEmail.from,
+          to: encryptedEmail.to,
+          cc: encryptedEmail.cc,
+          bcc: encryptedEmail.bcc,
+          date: parsedEmail.date ? new Date(parsedEmail.date) : undefined,
+          subject: encryptedEmail.subject,
+          messageId: messageId,
+          replyTo: encryptedEmail.replyTo,
+          snippet: encryptedEmail.snippet,
+          threadId: encryptedEmail.threadId,
+          plainTextMessage: encryptedEmail.plainTextMessage,
+          htmlMessage: encryptedEmail.htmlMessage,
+          labelIds: parsedEmail.labelIds,
+          priorityGrade: parsedEmail.priorityGrade,
+          integrationId,
+          attachments: {
+            create: encryptedEmail.attachments.map((attachment) => ({
+              filename: attachment.filename,
+              mimeType: attachment.mimeType,
+              data: attachment.data,
+            })),
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching email details: ", error);
+    }
+
+    await channel.publish("email-updates", {
+      message: "new-email",
+      body: {
+        email: parsedEmail,
       },
+    });
+  }
+};
+
+const handleDeletedMessage = async (messageId: string, channel: Channel) => {
+  await prisma.mail.deleteMany({
+    where: { messageId },
+  });
+
+  await channel.publish("email-updates", {
+    message: "delete-email",
+    body: {
+      messageId,
     },
   });
 };
 
-const handleDeletedMessage = async (messageId: string) => {
-  await prisma.mail.deleteMany({
-    where: { messageId },
-  });
-};
-
-const handleLabelChange = async (gmail: gmail_v1.Gmail, messageId: string) => {
+const handleLabelChange = async (
+  gmail: gmail_v1.Gmail,
+  messageId: string,
+  channel: Channel
+) => {
   const emailResponse = await gmail.users.messages.get({
     userId: "me",
     id: messageId,
@@ -195,6 +223,14 @@ const handleLabelChange = async (gmail: gmail_v1.Gmail, messageId: string) => {
   await prisma.mail.updateMany({
     where: { messageId },
     data: { labelIds: updatedLabels },
+  });
+
+  await channel.publish("email-updates", {
+    message: "label-change",
+    body: {
+      messageId,
+      updatedLabels,
+    },
   });
 };
 
