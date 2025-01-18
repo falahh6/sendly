@@ -8,6 +8,7 @@ import { useIntegrations } from "@/context/mailbox";
 
 import { ablyClient, getAblyInstance } from "@/lib/ably";
 import { Session } from "next-auth";
+import { Loader } from "lucide-react";
 
 export const MailList = ({
   integrationId,
@@ -20,6 +21,7 @@ export const MailList = ({
   const router = useRouter();
   const pathname = usePathname();
   const [selectedMail, setSelectedMail] = useState(pathname.split("/")[3]);
+  const [fetchLoading, setFetchLoading] = useState(true);
 
   const fetchEmails = async () => {
     try {
@@ -29,7 +31,7 @@ export const MailList = ({
           headers: {
             auth: `${userSession?.accessToken}`,
           },
-          cache: "force-cache",
+          // cache: "force-cache",
           method: "GET",
         }
       );
@@ -40,6 +42,8 @@ export const MailList = ({
       }
     } catch (error) {
       console.error("Error fetching emails:", error);
+    } finally {
+      setFetchLoading(false);
     }
   };
 
@@ -103,6 +107,7 @@ export const MailList = ({
 
     if ((currentIntegration?.mails?.length ?? 0) > 0) {
       setEmailsList(currentIntegration?.mails ?? []);
+      setFetchLoading(false);
     }
 
     if ((currentIntegration?.mails?.length ?? 0) === 0) {
@@ -161,6 +166,12 @@ export const MailList = ({
         <h1 className="text-lg font-semibold p-2">Emails</h1>
       </div>
       <div className="max-h-full overflow-y-auto overflow-x-hidden">
+        {fetchLoading && (
+          <div className="w-full flex flex-row justify-center items-center h-full">
+            <Loader className="mr-2 animate-spin h-4 w-4" />{" "}
+            <span>Loading...</span>
+          </div>
+        )}
         {emailsList?.length === 0 && (
           <>
             <div className="w-full flex flex-row justify-center items-center h-full">

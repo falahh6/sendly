@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       where: {
         integrationId: Number(integrationId),
       },
-      take: pageSize,
+      take: 20, //pageSize,
       skip: skip,
       include: {
         attachments: true,
