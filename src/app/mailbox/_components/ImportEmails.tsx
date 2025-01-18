@@ -67,8 +67,6 @@ export const ImportEmails = ({
 
   let init = false;
 
-  const gmailChannel = ablyClient(`gmail-channel-${integrationId}`);
-
   useEffect(() => {
     console.log("Integration profiles: ", integrationProfiles);
     if (!init) {
@@ -77,7 +75,10 @@ export const ImportEmails = ({
         (!integrationProfiles?.isImportCancelled &&
           !integrationProfiles?.importComplete)
       ) {
-        console.log(gmailChannel);
+        const gmailChannel = ablyClient(
+          `gmail-channel-${integrationId}`,
+          "import"
+        );
 
         gmailChannel.subscribe("mail-import", (message) => {
           const data = message.data as

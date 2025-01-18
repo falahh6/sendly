@@ -48,7 +48,7 @@ const fetchEmails = async (authToken: string, integrationId: string) => {
   );
 
   const data = await response.json();
-  return data.mails;
+  return data.mails || [];
 };
 
 const MailboxLayout = async ({
@@ -60,6 +60,14 @@ const MailboxLayout = async ({
 }) => {
   const session = await getServerSession(authOptions);
   const integrationsData = await getIntegrations(session?.accessToken ?? "");
+
+  const integrationData = integrationsData.find(
+    (i: Integration) => i.id == Number(params.integration)
+  );
+
+  if (integrationData) {
+    console.log("Integration Data: -< ", integrationData);
+  }
 
   if (integrationsData?.length === 0) {
     redirect("/mailbox/?m=add-new");
@@ -129,9 +137,9 @@ const MailboxLayout = async ({
             minSize={20}
             maxSize={35}
           >
-            {emails?.length > 0 ? (
+            {emails?.length > 0 || integrationData.profile.importComplete ? (
               <MailList
-                emails={emails}
+                userSession={session}
                 integrationId={params.integration}
                 integrations={integrationsData}
               />

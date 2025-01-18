@@ -49,11 +49,14 @@ export const importEmailsFunction = inngest.createFunction(
       return { error: "Import completed" };
     }
 
+    const tokens = await evervault.decrypt({
+      access_token: integration.accessToken,
+      refresh_token: integration.refreshToken ?? "",
+    });
+
     oauth2Client.setCredentials({
-      access_token: await evervault.decrypt(integration.accessToken),
-      refresh_token: await evervault.decrypt(
-        integration.refreshToken ?? undefined
-      ),
+      access_token: tokens.access_token,
+      refresh_token: tokens.tokens.access_token,
     });
 
     const gmail = google.gmail({ version: "v1", auth: oauth2Client });
@@ -110,6 +113,22 @@ export const importEmailsFunction = inngest.createFunction(
     const batchSize = 20;
     let importedCount = profile.emailImportedCount ?? 0;
     console.log("Imported Count : ", importedCount);
+
+    const previousEmails = await prisma.mail.findMany({
+      where: {
+        integrationId,
+      },
+      select: {
+        messageId: true,
+      },
+    });
+
+    console.log("Previous Emails (ids) : ", previousEmails);
+
+    console.log(
+      "Previous Emails (ids) decypted : ",
+      await evervault.decrypt(previousEmails)
+    );
 
     for (let i = 0; i < messages.length; i += batchSize) {
       const batch = messages.slice(i, i + batchSize);

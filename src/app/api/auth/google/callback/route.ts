@@ -23,12 +23,9 @@ export async function GET(req: NextRequest) {
   try {
     const { tokens } = await oAuth2Client.getToken(code);
     oAuth2Client.setCredentials(tokens);
-    console.log("TOKENS : ", tokens);
 
     const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
     const profile = await gmail.users.getProfile({ userId: "me" });
-
-    console.log("User Profile: ", profile);
 
     const userEmailAddress = profile.data.emailAddress;
 
@@ -65,10 +62,15 @@ export async function GET(req: NextRequest) {
 
       console.log("TOKENS : ", tokens);
 
+      const encTokens = await evervault.encrypt({
+        access_token: tokens.access_token as string,
+        refresh_token: tokens.refresh_token as string,
+      });
+
       const integration = await prisma.integration.create({
         data: {
-          accessToken: await evervault.encrypt(tokens.access_token as string),
-          refreshToken: await evervault.encrypt(tokens.refresh_token),
+          accessToken: encTokens.access_token,
+          refreshToken: encTokens.refresh_token,
           provider: "Google",
           name: "Gmail",
           profile: {

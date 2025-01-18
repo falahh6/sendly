@@ -57,8 +57,6 @@ export async function GET(request: NextRequest) {
       refresh_token: await evervault.decrypt(integration.refreshToken ?? ""),
     };
 
-    console.log("Tokens (import): ", tokens);
-
     oauth2Client.setCredentials({
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,

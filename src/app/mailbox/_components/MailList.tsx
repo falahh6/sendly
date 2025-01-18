@@ -7,23 +7,50 @@ import { useEffect, useState } from "react";
 import { useIntegrations } from "@/context/mailbox";
 import { Integration } from "@/lib/types/integrations";
 
-import { ablyClient } from "@/lib/ably";
+import { ablyClient, getAblyInstance } from "@/lib/ably";
+import { Session } from "next-auth";
 
 export const MailList = ({
-  emails,
   integrationId,
   integrations,
+  userSession,
 }: {
-  emails: ParsedEmail[];
   integrationId: string;
   integrations: Integration[];
+  userSession: Session | null;
 }) => {
-  const [emailsList, setEmailsList] = useState(emails);
+  const [emailsList, setEmailsList] = useState<ParsedEmail[]>([]);
   const router = useRouter();
   const pathname = usePathname();
   const [selectedMail, setSelectedMail] = useState(pathname.split("/")[3]);
 
-  const { setIntegrations, setCurrentIntegration } = useIntegrations();
+  const fetchEmails = async () => {
+    try {
+      const response = await fetch(
+        `/api/integrations/mails?integration_id=${integrationId}`,
+        {
+          headers: {
+            auth: `${userSession?.accessToken}`,
+          },
+          cache: "force-cache",
+          method: "GET",
+        }
+      );
+
+      const data = await response.json();
+      if (data.mails) {
+        updateEmailData(data.mails);
+      }
+    } catch (error) {
+      console.error("Error fetching emails:", error);
+    }
+  };
+
+  const {
+    setIntegrations,
+    setCurrentIntegration,
+    integrations: IntegrationsCtx,
+  } = useIntegrations();
 
   const mailboxId = pathname.split("/")[2];
 
@@ -31,8 +58,6 @@ export const MailList = ({
     setSelectedMail(id);
     router.push(`/mailbox/${mailboxId}/${id}`);
   };
-
-  const gmailChannel = ablyClient(`gmail-channel-${integrationId}`);
 
   const updateLabels = (email: ParsedEmail, labels: string[]) => {
     console.log("updating email : ", email);
@@ -53,7 +78,9 @@ export const MailList = ({
 
     setEmailsList(sortedEmails);
 
-    const updatededIntegrationsWithEmail = integrations?.map((integration) => {
+    const updatededIntegrationsWithEmail = (
+      IntegrationsCtx || integrations
+    )?.map((integration) => {
       if (integration.id === Number(integrationId)) {
         return {
           ...integration,
@@ -71,15 +98,29 @@ export const MailList = ({
   };
 
   useEffect(() => {
-    console.log("Emails: ", emails);
-    console.log("IntegrationId: ", integrationId);
-    console.log("Integrations : ", integrations);
+    console.log("Integrations DATA : ", IntegrationsCtx);
 
-    if (emails) {
-      updateEmailData(emails);
+    const currentIntegration = IntegrationsCtx.find(
+      (integration) => integration.id === Number(integrationId)
+    );
+
+    if ((currentIntegration?.mails?.length ?? 0) > 0) {
+      setEmailsList(currentIntegration?.mails ?? []);
     }
 
-    console.log("CHANNEL : ", gmailChannel);
+    if ((currentIntegration?.mails?.length ?? 0) === 0) {
+      fetchEmails();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (emailsList.length === 0) {
+      return;
+    }
+
+    const gmailChannel = ablyClient(`gmail-channel-${integrationId}`, "list");
+
+    console.log("Gmail Channel: ", gmailChannel);
 
     gmailChannel.subscribe(`email-updates`, (data) => {
       console.log("EMAIL updates", data);
@@ -91,11 +132,12 @@ export const MailList = ({
 
       if (data.data.message === "delete-email") {
         const messageId = data.data.body.messageId;
-        updateEmailData(emails.filter((email) => email.id !== messageId));
+        updateEmailData(emailsList.filter((email) => email.id !== messageId));
       }
 
       if (data.data.message === "label-change") {
         const messageId = data.data.body.messageId;
+        console.log("EMAILs : ", emailsList);
         const email = emailsList.find((email) => email.messageId == messageId)!;
         if (email) {
           const labels = data.data.body.updatedLabels;
@@ -111,8 +153,10 @@ export const MailList = ({
 
     return () => {
       gmailChannel.unsubscribe(`email-updates`);
+      getAblyInstance().channels.release(`gmail-channel-${integrationId}`);
+      getAblyInstance().close();
     };
-  }, [emails]);
+  }, [integrationId, emailsList]);
 
   return (
     <div className="h-full flex flex-col justify-between">
@@ -120,6 +164,13 @@ export const MailList = ({
         <h1 className="text-lg font-semibold p-2">Emails</h1>
       </div>
       <div className="max-h-full overflow-y-auto overflow-x-hidden">
+        {emailsList?.length === 0 && (
+          <>
+            <div className="w-full flex flex-row justify-center items-center h-full">
+              <p>No emails found</p>
+            </div>
+          </>
+        )}
         {emailsList.map((email) => (
           <div
             role="button"
