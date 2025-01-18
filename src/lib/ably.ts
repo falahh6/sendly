@@ -1,5 +1,4 @@
 import { Realtime, RealtimeChannel, Rest } from "ably";
-import { toast } from "sonner";
 
 let ably: Realtime | null = null;
 
@@ -16,7 +15,7 @@ export const ablyServer = new Rest(process.env.NEXT_PUBLIC_ABLY_API_KEY!);
 
 const channelCache: { [key: string]: RealtimeChannel } = {};
 
-export const ablyClient = (channelName: string, fr?: string) => {
+export const ablyClient = (channelName: string) => {
   if (!channelCache[channelName]) {
     const ably = new Realtime(process.env.NEXT_PUBLIC_ABLY_API_KEY!);
     const channel = ably.channels.get(channelName);

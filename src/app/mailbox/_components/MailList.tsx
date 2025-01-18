@@ -120,7 +120,7 @@ export const MailList = ({
       return;
     }
 
-    const gmailChannel = ablyClient(`gmail-channel-${integrationId}`, "list");
+    const gmailChannel = ablyClient(`gmail-channel-${integrationId}`);
 
     console.log("Gmail Channel: ", gmailChannel);
 

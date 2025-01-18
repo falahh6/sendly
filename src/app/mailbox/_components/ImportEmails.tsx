@@ -72,10 +72,7 @@ export const ImportEmails = ({
         (!integrationProfiles?.isImportCancelled &&
           !integrationProfiles?.importComplete)
       ) {
-        const gmailChannel = ablyClient(
-          `gmail-channel-${integrationId}`,
-          "import"
-        );
+        const gmailChannel = ablyClient(`gmail-channel-${integrationId}`);
 
         gmailChannel.subscribe("mail-import", (message) => {
           const data = message.data as
