@@ -5,18 +5,15 @@ import { cn, formatStringDate, removeNoreplyEmail } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useIntegrations } from "@/context/mailbox";
-import { Integration } from "@/lib/types/integrations";
 
 import { ablyClient, getAblyInstance } from "@/lib/ably";
 import { Session } from "next-auth";
 
 export const MailList = ({
   integrationId,
-  integrations,
   userSession,
 }: {
   integrationId: string;
-  integrations: Integration[];
   userSession: Session | null;
 }) => {
   const [emailsList, setEmailsList] = useState<ParsedEmail[]>([]);
@@ -78,17 +75,17 @@ export const MailList = ({
 
     setEmailsList(sortedEmails);
 
-    const updatededIntegrationsWithEmail = (
-      IntegrationsCtx || integrations
-    )?.map((integration) => {
-      if (integration.id === Number(integrationId)) {
-        return {
-          ...integration,
-          mails: sortedEmails,
-        };
+    const updatededIntegrationsWithEmail = IntegrationsCtx?.map(
+      (integration) => {
+        if (integration.id === Number(integrationId)) {
+          return {
+            ...integration,
+            mails: sortedEmails,
+          };
+        }
+        return integration;
       }
-      return integration;
-    });
+    );
 
     console.log("Updated Integrations: ", updatededIntegrationsWithEmail);
     setIntegrations(updatededIntegrationsWithEmail);

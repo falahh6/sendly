@@ -35,13 +35,10 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    if (!user) {
+    if (!user)
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_SITE_URL}?error=NoUserFound`
       );
-    } else {
-      console.log("User found:", user);
-    }
 
     const integration = await prisma.integration.findFirst({
       where: {
@@ -57,10 +54,7 @@ export async function GET(req: NextRequest) {
         },
       });
 
-      console.log("Watch Response: ", watchResponse);
       const historyId = watchResponse.data.historyId;
-
-      console.log("TOKENS : ", tokens);
 
       const encTokens = await evervault.encrypt({
         access_token: tokens.access_token as string,
@@ -86,8 +80,6 @@ export async function GET(req: NextRequest) {
         `${process.env.NEXT_PUBLIC_SITE_URL}/mailbox/${integration.id}?redirect=google`
       );
     } else {
-      console.log("Integration found : ", integration);
-
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_SITE_URL}/mailbox/${integration.id}?redirect=google&error=IntegrationExists`
       );

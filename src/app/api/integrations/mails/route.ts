@@ -34,6 +34,12 @@ export async function GET(request: NextRequest) {
     const pageSize = parseInt(params.get("pageSize") ?? "50", 10);
     const skip = (page - 1) * pageSize;
 
+    const totalMails = await prisma.mail.count({
+      where: {
+        integrationId: Number(integrationId),
+      },
+    });
+
     const mails = await prisma.mail.findMany({
       where: {
         integrationId: Number(integrationId),
@@ -42,12 +48,6 @@ export async function GET(request: NextRequest) {
       skip: skip,
       include: {
         attachments: true,
-      },
-    });
-
-    const totalMails = await prisma.mail.count({
-      where: {
-        integrationId: Number(integrationId),
       },
     });
 

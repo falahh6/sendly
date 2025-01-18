@@ -13,8 +13,6 @@ export async function GET(request: NextRequest) {
   const userAccessToken = url.searchParams.get("userAccessToken");
   const email = url.searchParams.get("email");
 
-  console.log("userAccessToken : ", userAccessToken);
-
   const authUrl = oAuth2Client.generateAuthUrl({
     access_type: "offline",
     scope: ["https://mail.google.com/"], //all remail access

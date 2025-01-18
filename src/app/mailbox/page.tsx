@@ -92,6 +92,7 @@ const Page = () => {
                 onClick={() => {
                   setVisitLoading(true);
                 }}
+                asChild
               >
                 <Link href={`/mailbox/${selectedIntegration}`}>
                   {visitLoading ? (

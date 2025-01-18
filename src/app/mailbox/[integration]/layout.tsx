@@ -35,22 +35,6 @@ const getIntegrations = async (authToken: string) => {
   return data.integrations || [];
 };
 
-const fetchEmails = async (authToken: string, integrationId: string) => {
-  const response = await fetch(
-    process.env.NEXT_PUBLIC_SITE_URL +
-      `/api/integrations/mails?integration_id=${integrationId}`,
-    {
-      headers: {
-        auth: `${authToken}`,
-      },
-      method: "GET",
-    }
-  );
-
-  const data = await response.json();
-  return data.mails || [];
-};
-
 const MailboxLayout = async ({
   children,
   params,
@@ -65,10 +49,6 @@ const MailboxLayout = async ({
     (i: Integration) => i.id == Number(params.integration)
   );
 
-  if (integrationData) {
-    console.log("Integration Data: -< ", integrationData);
-  }
-
   if (integrationsData?.length === 0) {
     redirect("/mailbox/?m=add-new");
   }
@@ -82,11 +62,6 @@ const MailboxLayout = async ({
   ) {
     return "INVALID INTEGRATION, Please check if you have correct ID ";
   }
-
-  const emails = await fetchEmails(
-    session?.accessToken ?? "",
-    params.integration
-  );
 
   return (
     <>
@@ -103,7 +78,6 @@ const MailboxLayout = async ({
         <div>
           <Selector
             integrationId={Number(params.integration)}
-            integrations={integrationsData}
             key={params.integration}
           />
         </div>
@@ -111,7 +85,6 @@ const MailboxLayout = async ({
           <ImportEmails
             integrationId={params.integration}
             type="nav"
-            emails={emails}
             integrationProfiles={
               integrationsData?.find(
                 (i: Integration) => i.id == Number(params.integration)
@@ -137,15 +110,13 @@ const MailboxLayout = async ({
             minSize={20}
             maxSize={35}
           >
-            {emails?.length > 0 || integrationData.profile.importComplete ? (
+            {integrationData.profile.importComplete ? (
               <MailList
                 userSession={session}
                 integrationId={params.integration}
-                integrations={integrationsData}
               />
             ) : (
               <ImportEmails
-                emails={emails}
                 integrationId={params.integration}
                 integrationProfiles={
                   integrationsData?.find(

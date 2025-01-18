@@ -10,17 +10,14 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ParsedEmail } from "@/lib/types/email";
 import { ablyClient } from "@/lib/ably";
 
 export const ImportEmails = ({
   integrationId,
-  emails,
   type,
   integrationProfiles,
 }: {
   integrationId: string;
-  emails: ParsedEmail[];
   type?: "nav" | "normal";
   integrationProfiles?: Record<string, string | number | boolean>;
 }) => {
@@ -125,8 +122,7 @@ export const ImportEmails = ({
   }, []);
 
   if (type === "nav") {
-    if (!integrationProfiles?.isImportProcessing || emails.length === 0)
-      return <></>;
+    if (!integrationProfiles?.isImportProcessing) return <></>;
 
     return (
       <DropdownMenu>

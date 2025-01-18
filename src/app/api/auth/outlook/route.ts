@@ -12,8 +12,6 @@ export async function GET(request: NextRequest) {
   const userAccessToken = url.searchParams.get("userAccessToken");
   const email = url.searchParams.get("email");
 
-  console.log("userAccessToken : ", userAccessToken);
-
   const authUrl =
     `https://login.microsoftonline.com/${tenant_id}/oauth2/v2.0/authorize?` +
     new URLSearchParams({

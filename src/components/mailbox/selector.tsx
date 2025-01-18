@@ -11,29 +11,23 @@ import { Icons } from "../icons";
 import { useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader, Plus } from "lucide-react";
-import { Integration } from "@/lib/types/integrations";
 import { useIntegrations } from "@/context/mailbox";
 
-export const Selector = ({
-  integrationId,
-  integrations,
-}: {
-  integrationId: number;
-  integrations: Integration[];
-}) => {
+export const Selector = ({ integrationId }: { integrationId: number }) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const { setCurrentIntegration } = useIntegrations();
+  const { setCurrentIntegration, integrations: integrationsCtx } =
+    useIntegrations();
 
   useEffect(() => {
-    if (integrations.length === 0) {
+    if (integrationsCtx.length === 0) {
       return;
     }
     setCurrentIntegration(
-      integrations.find((integration) => integration.id === integrationId)
+      integrationsCtx.find((integration) => integration.id === integrationId)
     );
-  }, [integrations]);
+  }, [integrationsCtx]);
 
   const valChangeHandler = (val: string) => {
     if (val === "add-new") {
@@ -42,15 +36,8 @@ export const Selector = ({
       });
       return;
     }
-
-    console.log("Selected Integration:", val);
-    console.log("Integrations :", integrations);
-    console.log(
-      "Integration:",
-      integrations.find((integration) => integration.id === Number(val))
-    );
     setCurrentIntegration(
-      integrations.find((integration) => integration.id === parseInt(val))
+      integrationsCtx.find((integration) => integration.id === parseInt(val))
     );
 
     startTransition(() => {
@@ -60,7 +47,7 @@ export const Selector = ({
 
   return (
     <>
-      {integrations.length === 0 ? (
+      {integrationsCtx.length === 0 ? (
         <div className="h-12 w-52 border bg-gray-100 animate-pulse rounded-xl" />
       ) : (
         <Select
@@ -80,7 +67,7 @@ export const Selector = ({
             )}
           </SelectTrigger>
           <SelectContent className="rounded-xl">
-            {integrations.map((integration) => (
+            {integrationsCtx.map((integration) => (
               <SelectItem
                 key={integration.id}
                 value={integration.id.toString()}
@@ -98,7 +85,7 @@ export const Selector = ({
                 </div>
               </SelectItem>
             ))}
-            <SelectItem key={integrations.length} value="add-new">
+            <SelectItem key={integrationsCtx.length} value="add-new">
               <div className="flex flex-row gap-2 w-full">
                 <div className="bg-neutral-50 h-6 w-6 rounded-full p-1">
                   <Plus className="h-4 w-4" />
