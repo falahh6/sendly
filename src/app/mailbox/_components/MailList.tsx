@@ -9,6 +9,7 @@ import { useIntegrations } from "@/context/mailbox";
 import { ablyClient, getAblyInstance } from "@/lib/ably";
 import { Session } from "next-auth";
 import { Loader } from "lucide-react";
+import { useHash } from "@/app/hooks/useHash";
 
 export const MailList = ({
   integrationId,
@@ -22,6 +23,7 @@ export const MailList = ({
   const pathname = usePathname();
   const [selectedMail, setSelectedMail] = useState(pathname.split("/")[3]);
   const [fetchLoading, setFetchLoading] = useState(true);
+  const hash = useHash();
 
   const fetchEmails = async () => {
     try {
@@ -69,6 +71,73 @@ export const MailList = ({
 
     console.log("Updated Email: ", updatedEmail);
     return updatedEmail;
+  };
+
+  useEffect(() => {
+    if (fetchLoading) return;
+    const emailsList = IntegrationsCtx.find(
+      (i) => i.id === Number(integrationId)
+    )?.mails;
+
+    const filteredEmails = filterByHash(emailsList ?? [], hash);
+
+    console.log("Filtered Emails: ", filteredEmails);
+
+    setEmailsList(filteredEmails || []);
+  }, [hash, fetchLoading]);
+
+  const filterByHash = (emails: ParsedEmail[], hash: string) => {
+    console.log("Filtering by hash: ", hash);
+    if (hash === "#inbox") {
+      const inboxEmails = emails.filter((email) =>
+        email.labelIds.includes("INBOX")
+      );
+
+      console.log("Inbox Emails: ", inboxEmails);
+
+      return inboxEmails;
+    }
+    if (hash === "#starred") {
+      const starredEmails = emails.filter((email) =>
+        email.labelIds.includes("STARRED")
+      );
+
+      console.log("Starred Emails: ", starredEmails);
+
+      return starredEmails;
+    }
+
+    if (hash === "#sent") {
+      const sentEmails = emails.filter((email) =>
+        email.labelIds.includes("SENT")
+      );
+
+      console.log("Sent Emails: ", sentEmails);
+
+      return sentEmails;
+    }
+
+    if (hash === "#drafts") {
+      const draftEmails = emails.filter((email) =>
+        email.labelIds.includes("DRAFT")
+      );
+
+      console.log("Draft Emails: ", draftEmails);
+
+      return draftEmails;
+    }
+
+    if (hash === "#trash") {
+      const trashEmails = emails.filter((email) =>
+        email.labelIds.includes("TRASH")
+      );
+
+      console.log("Trash Emails: ", trashEmails);
+
+      return trashEmails;
+    }
+
+    return emails;
   };
 
   const updateEmailData = (emails: ParsedEmail[]) => {
@@ -162,9 +231,9 @@ export const MailList = ({
 
   return (
     <div className="h-full flex flex-col justify-between">
-      <div className="h-fit max-h-[12%] border-b">
+      {/* <div className="h-fit max-h-[12%] border-b">
         <h1 className="text-lg font-semibold p-2">Emails</h1>
-      </div>
+      </div> */}
       <div className="max-h-full overflow-y-auto overflow-x-hidden">
         {fetchLoading && (
           <div className="w-full flex flex-row justify-center items-center h-full">
@@ -173,11 +242,9 @@ export const MailList = ({
           </div>
         )}
         {emailsList?.length === 0 && (
-          <>
-            <div className="w-full flex flex-row justify-center items-center h-full">
-              <p>No emails found</p>
-            </div>
-          </>
+          <div className="w-full flex flex-row justify-center items-center h-full py-6">
+            <p>No emails found</p>
+          </div>
         )}
         {emailsList.map((email) => (
           <div

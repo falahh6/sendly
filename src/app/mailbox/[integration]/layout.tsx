@@ -12,6 +12,7 @@ import React from "react";
 import { redirect } from "next/navigation";
 import { Integration } from "@/lib/types/integrations";
 import Link from "next/link";
+import SideBar from "../_components/Sidebar";
 
 const getIntegrations = async (authToken: string) => {
   const response = await fetch(
@@ -45,7 +46,7 @@ const MailboxLayout = async ({
   const session = await getServerSession(authOptions);
   const integrationsData = await getIntegrations(session?.accessToken ?? "");
 
-  const integrationData = integrationsData.find(
+  const integrationData = integrationsData?.find(
     (i: Integration) => i.id == Number(params.integration)
   );
 
@@ -74,61 +75,63 @@ const MailboxLayout = async ({
         </div>
         <div></div>
       </div>
-      <div className="flex flex-row items-center justify-between h-[7vh] rounded-lg w-full">
-        <div>
-          <Selector
-            integrationId={Number(params.integration)}
-            key={params.integration}
-          />
+      <div className=" w-full">
+        <div className="flex flex-row items-center justify-between h-[10vh] rounded-lg w-full">
+          <div>
+            <Selector
+              integrationId={Number(params.integration)}
+              key={params.integration}
+            />
+          </div>
+          <div>
+            <ImportEmails
+              integrationId={params.integration}
+              type="nav"
+              integrationProfiles={
+                integrationsData?.find(
+                  (i: Integration) => i.id == Number(params.integration)
+                )?.profile
+              }
+            />
+          </div>
         </div>
-        <div>
-          <ImportEmails
-            integrationId={params.integration}
-            type="nav"
-            integrationProfiles={
-              integrationsData?.find(
-                (i: Integration) => i.id == Number(params.integration)
-              )?.profile
-            }
-          />
+        <div className="h-[78vh] w-full">
+          <ResizablePanelGroup direction="horizontal" className="space-x-1">
+            <ResizablePanel
+              className="p-4 bg-neutral-50 rounded-lg border"
+              defaultSize={5}
+              minSize={5}
+              maxSize={5}
+            >
+              <SideBar />
+            </ResizablePanel>
+            <ResizableHandle className="bg-transparent dark:bg-transparent" />
+            <ResizablePanel
+              className="bg-white rounded-lg border"
+              defaultSize={85}
+              minSize={30}
+              maxSize={45}
+            >
+              {integrationData.profile.importComplete ? (
+                <MailList
+                  userSession={session}
+                  integrationId={params.integration}
+                />
+              ) : (
+                <ImportEmails
+                  integrationId={params.integration}
+                  integrationProfiles={
+                    integrationsData?.find(
+                      (i: Integration) => i.id == Number(params.integration)
+                    )?.profile
+                  }
+                />
+              )}
+            </ResizablePanel>
+            <ResizableHandle className="bg-transparent dark:bg-transparent" />
+            {children}
+          </ResizablePanelGroup>
         </div>
-      </div>
-      <div className="h-[78vh] w-full">
-        <ResizablePanelGroup direction="horizontal" className="space-x-1">
-          <ResizablePanel
-            className="p-4 bg-neutral-50 rounded-lg border"
-            defaultSize={5}
-            minSize={5}
-            maxSize={5}
-          >
-            Tools . sidebar
-          </ResizablePanel>
-          <ResizableHandle className="bg-transparent dark:bg-transparent" />
-          <ResizablePanel
-            className="bg-white rounded-lg border"
-            defaultSize={85}
-            minSize={20}
-            maxSize={35}
-          >
-            {integrationData.profile.importComplete ? (
-              <MailList
-                userSession={session}
-                integrationId={params.integration}
-              />
-            ) : (
-              <ImportEmails
-                integrationId={params.integration}
-                integrationProfiles={
-                  integrationsData?.find(
-                    (i: Integration) => i.id == Number(params.integration)
-                  )?.profile
-                }
-              />
-            )}
-          </ResizablePanel>
-          <ResizableHandle className="bg-transparent dark:bg-transparent" />
-          {children}
-        </ResizablePanelGroup>
       </div>
     </>
   );

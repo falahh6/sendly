@@ -56,7 +56,7 @@ export const importEmailsFunction = inngest.createFunction(
 
     oauth2Client.setCredentials({
       access_token: tokens.access_token,
-      refresh_token: tokens.tokens.access_token,
+      refresh_token: tokens.refresh_token,
     });
 
     const gmail = google.gmail({ version: "v1", auth: oauth2Client });
