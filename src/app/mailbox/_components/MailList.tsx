@@ -275,7 +275,7 @@ export const MailList = ({
   return (
     <div className="flex h-full flex-col bg-white">
       <ScrollArea className="flex-1">
-        <div className="space-y-2 p-4">
+        <div className="space-y-2 p-2 pr-4">
           {emailsList &&
             emailsList.map(({ threadId, emails }) => {
               const latestEmail = emails[0]; // Show the most recent email as the preview
@@ -307,10 +307,10 @@ function EmailItem({
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 rounded-lg border border-transparent p-3 transition-colors hover:bg-zinc-50",
+        "flex flex-col gap-1 rounded-lg border border-transparent p-2 transition-colors hover:bg-zinc-50",
         email.labelIds.includes("UNREAD") && "bg-zinc-50",
         selectedMail == email.threadId &&
-          "bg-zinc-100 border-l-4 border-indigo-600"
+          "bg-zinc-100 border-l-4 border-indigo-600 shadow-sm shadow-indigo-200"
       )}
       role="button"
       tabIndex={0}

@@ -46,7 +46,7 @@ export function UserProfile({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-xl"
-        side={"right"}
+        side={"top"}
         align="end"
         sideOffset={4}
       >
@@ -78,7 +78,14 @@ export function UserProfile({
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => signOut()}>
+        <DropdownMenuItem
+          onClick={() =>
+            signOut({
+              callbackUrl: "/",
+            })
+          }
+          className="hover:cursor-pointer"
+        >
           <LogOut />
           Log out
         </DropdownMenuItem>

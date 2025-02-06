@@ -1,28 +1,44 @@
+"use client";
+
 import type React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { usePathname } from "next/navigation";
+import { useHash } from "@/app/hooks/useHash";
 
 export function NavButton({
   icon,
   label,
   badge,
   isCollapsed,
-  isActive,
 }: {
   icon: React.ReactNode;
   label: string;
   badge?: string;
   isCollapsed: boolean;
-  isActive?: boolean;
 }) {
+  const pathname = usePathname();
+  const hash = useHash();
+
+  const handleSidebarOptionsClick = () => {
+    window.location.href = pathname + "#" + label.toLowerCase();
+  };
+
+  const isActive = () => {
+    return hash.replace("#", "") === label.toLowerCase();
+  };
+
   return (
     <Button
       variant="ghost"
       className={cn(
         "w-full justify-start gap-2",
-        isActive && "bg-zinc-100 text-zinc-900"
+        isActive() && "bg-zinc-100 text-zinc-900"
       )}
+      onClick={() => {
+        handleSidebarOptionsClick();
+      }}
     >
       {icon}
       {!isCollapsed && (

@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-import { FolderButton, NavButton } from "./SidebarButtons";
+import { NavButton } from "./SidebarButtons";
 import { Selector } from "@/components/mailbox/selector";
 import { UserProfile } from "@/components/auth/UserProfile";
 import Image from "next/image";
@@ -63,7 +63,6 @@ export default function Sidebar({
               label="Inbox"
               badge="12,923"
               isCollapsed={isCollapsed}
-              isActive
             />
             <NavButton
               icon={<Star className="h-4 w-4" />}
@@ -95,24 +94,9 @@ export default function Sidebar({
               isCollapsed={isCollapsed}
             />
           </nav>
-
-          {!isCollapsed && (
-            <div>
-              <div className="flex items-center justify-between py-2">
-                <h2 className="text-xs font-semibold text-zinc-500">FOLDERS</h2>
-                <Button variant="ghost" size="icon" className="h-4 w-4">
-                  <Plus className="h-3 w-3" />
-                </Button>
-              </div>
-              <div className="space-y-1">
-                <FolderButton label="Folder 1" badge="18" />
-                <FolderButton label="Folder 2" badge="4" />
-              </div>
-            </div>
-          )}
         </div>
       </ScrollArea>
-      <div className="m-2 space-y-4 bg-white">
+      <div className="m-4 space-y-4 bg-white">
         <UserProfile user={user} />
       </div>
     </div>

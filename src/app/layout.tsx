@@ -28,10 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} `}>
-        <Providers>
-          {/* <NavProfile /> */}
-          {children}
-        </Providers>
+        <Providers>{children}</Providers>
         <Toaster richColors />
       </body>
     </html>

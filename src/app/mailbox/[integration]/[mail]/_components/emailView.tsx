@@ -47,8 +47,8 @@ export const EmailView = ({ emailTheadId }: { emailTheadId: string }) => {
 
   return (
     <div className="flex h-full flex-col bg-white">
-      <div className="flex items-center justify-between border-b border-zinc-200 p-4">
-        <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between border-b border-zinc-200 p-2">
+        <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="icon"
@@ -92,6 +92,9 @@ export const EmailView = ({ emailTheadId }: { emailTheadId: string }) => {
           <EmailThread mail={mail} />
         </div>
       </ScrollArea>
+      <div className="bg-gray-100 p-2 m-2 rounded-xl h-28 text-sm border-2">
+        REPLY BLOCK HERE
+      </div>
     </div>
   );
 };
