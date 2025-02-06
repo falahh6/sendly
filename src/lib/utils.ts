@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { ParsedEmail } from "./types/email";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -58,3 +59,26 @@ export const fetcher = async (url: string, authToken: string) => {
 export function removeNoreplyEmail(from: string): string {
   return from.replace(/<[^>]+>/, "");
 }
+
+export const groupEmailsByThread = (emails: ParsedEmail[]) => {
+  const threadMap = new Map<string, ParsedEmail[]>();
+
+  emails.forEach((email) => {
+    if (!email.threadId) {
+      threadMap.set(email.id, [email]);
+    } else {
+      if (!threadMap.has(email.threadId)) {
+        threadMap.set(email.threadId, []);
+      }
+      threadMap.get(email.threadId)?.push(email);
+    }
+  });
+
+  return Array.from(threadMap.entries()).map(([threadId, emails]) => ({
+    threadId,
+    emails: emails.sort(
+      (a, b) =>
+        new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()
+    ),
+  }));
+};

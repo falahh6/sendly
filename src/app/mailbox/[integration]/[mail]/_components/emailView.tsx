@@ -2,23 +2,18 @@
 
 import { useIntegrations } from "@/context/mailbox";
 import { ParsedEmail } from "@/lib/types/email";
-import { useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
+import { Fragment, useEffect, useState } from "react";
+
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { Download, Forward, MoreVertical, Reply } from "lucide-react";
 import { formatStringDate } from "@/lib/utils";
 import DOMPurify from "dompurify";
-import { useRouter } from "next/navigation";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
-export const EmailView = ({ emailId }: { emailId: string }) => {
+export const EmailView = ({ emailTheadId }: { emailTheadId: string }) => {
   const { integrations, currentIntegration } = useIntegrations();
-  const [mail, setMail] = useState<ParsedEmail>();
-  const router = useRouter();
+  const [mail, setMail] = useState<ParsedEmail[]>([]);
 
   useEffect(() => {
     const integration = integrations.find(
@@ -26,8 +21,8 @@ export const EmailView = ({ emailId }: { emailId: string }) => {
     );
     console.log("Integration: ", integration);
     if (integration?.mails) {
-      const selectedMail = integration.mails?.find(
-        (mail) => mail.id == emailId
+      const selectedMail = integration.mails?.filter(
+        (mail) => mail.threadId == emailTheadId
       );
       setMail(selectedMail);
     }
@@ -38,75 +33,118 @@ export const EmailView = ({ emailId }: { emailId: string }) => {
       (i) => i.id == currentIntegration?.id
     );
     const selectedMail =
-      integration && integration.mails?.find((mail) => mail.id == emailId);
+      integration &&
+      integration.mails?.filter((mail) => mail.threadId == emailTheadId);
     console.log("Selected Mail: ", selectedMail);
-    setMail(selectedMail);
-  }, [emailId]);
+    setMail(selectedMail || []);
+  }, [emailTheadId]);
 
   return (
-    <div className="h-full w-full overflow-y-auto">
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div className="flex flex-row items-center space-x-4">
-            <Button
-              size={"icon"}
-              className="rounded-xl"
-              variant={"secondary"}
-              onClick={() => {
-                router.push("/mailbox/" + currentIntegration?.id);
-              }}
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div>
-              <h2 className="text-sm font-semibold">From : {mail?.from}</h2>
-              <p className="text-sm text-muted-foreground">To : {mail?.to}</p>
+    <div className="flex h-full flex-col bg-white">
+      <div className="flex items-center justify-between border-b border-zinc-200 p-4">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-zinc-500 hover:text-zinc-600"
+          >
+            <Reply className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-zinc-500 hover:text-zinc-600"
+          >
+            <Forward className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-zinc-500 hover:text-zinc-600"
+          >
+            <Download className="h-4 w-4" />
+          </Button>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-zinc-500 hover:text-zinc-600"
+        >
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </div>
+      <ScrollArea className="flex-1">
+        <div className="space-y-6 p-6">
+          <EmailThread mail={mail} />
+        </div>
+      </ScrollArea>
+    </div>
+  );
+};
+
+function EmailThread({ mail }: { mail: ParsedEmail[] }) {
+  return (
+    <div className="space-y-6">
+      {mail.map((email, index) => (
+        <Fragment key={email.id}>
+          {index > 0 && <Separator className="my-6" />}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">{email.subject}</h2>
+              <div className="text-sm text-zinc-500">
+                {formatStringDate(email.date ?? "")}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-zinc-500">
+              <div>From: {email.from}</div>
+              <Separator orientation="vertical" className="h-4" />
+              <div>To: {email.to}</div>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-bold">{mail?.subject}</h3>
-              <p className="text-sm text-muted-foreground">
-                {formatStringDate(mail?.date ?? "")}
-              </p>
-            </div>
-            {mail?.htmlMessage ? (
+          <div className="space-y-4 text-sm leading-relaxed text-zinc-700">
+            {email.htmlMessage ? (
               <div
                 dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(mail?.htmlMessage || ""),
+                  __html: DOMPurify.sanitize(email?.htmlMessage || ""),
                 }}
                 className="prose prose-sm max-w-none overflow-y-auto"
               />
             ) : (
-              <div>{mail?.plainTextMessage ?? mail?.snippet}</div>
+              <div>{email?.plainTextMessage ?? email?.snippet}</div>
             )}
           </div>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          {/* <div className="flex space-x-2">
-            <Button variant="secondary" size="sm">
-              <Reply className="h-4 w-4 mr-2" />
-              Reply
-            </Button>
-            <Button variant="outline" size="sm">
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </Button>
-          </div> */}
-          {/* <div className="flex space-x-2">
-            <Button variant="outline" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-              <span className="sr-only">Previous email</span>
-            </Button>
-            <Button variant="outline" size="icon">
-              <ArrowRight className="h-4 w-4" />
-              <span className="sr-only">Next email</span>
-            </Button>
-          </div> */}
-        </CardFooter>
-      </Card>
+          {email.attachments.length > 0 && (
+            <div>
+              <h3 className="font-semibold mb-3">Attachments</h3>
+              <div className="flex gap-4">
+                {email.attachments.map((attachment, i) => (
+                  <AttachmentCard
+                    key={attachment.filename ?? "File" + i}
+                    {...attachment}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </Fragment>
+      ))}
     </div>
   );
-};
+}
+
+function AttachmentCard({
+  filename,
+  mimeType,
+}: // data,
+{
+  filename: string;
+  // data: string | null;
+  mimeType: string;
+}) {
+  return (
+    <div className="rounded-lg border border-zinc-200 p-3 text-sm hover:bg-zinc-50 transition-colors">
+      <div className="font-medium">{filename}</div>
+      <div className="text-zinc-500">{mimeType}</div>
+    </div>
+  );
+}
