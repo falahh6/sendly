@@ -33,7 +33,7 @@ const MailboxLayout = async ({ children }: { children: React.ReactNode }) => {
   return (
     <MailboxProvider integrationsData={integrations}>
       <main className="w-full bg-white flex flex-row text-sm md:text-base">
-        <div className="w-full p-4 max-w-[1440px] h-screen space-y-3 flex flex-col justify-center items-center">
+        <div className="w-full max-w-[1440px] h-screen flex flex-col justify-center items-center">
           {children}
         </div>
       </main>

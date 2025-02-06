@@ -70,9 +70,6 @@ export default async function Home() {
               Coming soon
             </Button>
           </div>{" "}
-          {/* <div className="flex flex-row max-sm:w-full items-center gap-4">
-            <ContinueWithGoogle /> <Logout />
-          </div> */}
         </div>
         <div>
           {session?.user ? (

@@ -5,15 +5,17 @@ import { ParsedEmail } from "@/lib/types/email";
 import { Fragment, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Download, Forward, MoreVertical, Reply } from "lucide-react";
+import { CircleX, Download, Forward, MoreVertical, Reply } from "lucide-react";
 import { formatStringDate } from "@/lib/utils";
 import DOMPurify from "dompurify";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useRouter } from "next/navigation";
 
 export const EmailView = ({ emailTheadId }: { emailTheadId: string }) => {
   const { integrations, currentIntegration } = useIntegrations();
   const [mail, setMail] = useState<ParsedEmail[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     const integration = integrations.find(
@@ -39,10 +41,22 @@ export const EmailView = ({ emailTheadId }: { emailTheadId: string }) => {
     setMail(selectedMail || []);
   }, [emailTheadId]);
 
+  const closeEmailView = () => {
+    router.push(`/mailbox/${currentIntegration?.id}`);
+  };
+
   return (
     <div className="flex h-full flex-col bg-white">
       <div className="flex items-center justify-between border-b border-zinc-200 p-4">
         <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-zinc-500 hover:text-zinc-600"
+            onClick={() => closeEmailView()}
+          >
+            <CircleX className="h-4 w-4" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"

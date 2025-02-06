@@ -10,6 +10,7 @@ import { redirect } from "next/navigation";
 import { Integration } from "@/lib/types/integrations";
 import Sidebar from "../_components/Sidebar";
 import { ImportEmails } from "../_components/ImportEmails";
+import TopBar from "../_components/TopBar";
 
 const getIntegrations = async (authToken: string) => {
   const response = await fetch(
@@ -68,39 +69,51 @@ const MailboxLayout = async ({
         className="min-h-screen bg-zinc-50"
       >
         <ResizablePanel
-          defaultSize={20}
-          minSize={8}
-          maxSize={25}
+          defaultSize={18}
+          minSize={18}
+          maxSize={18}
           className="min-w-[50px] border-r border-zinc-200"
         >
-          <Sidebar isCollapsed={false} integrationId={params.integration} />
+          <Sidebar
+            isCollapsed={false}
+            integrationId={params.integration}
+            user={{
+              name: session?.user.name ?? "",
+              email: session?.user.email ?? "",
+              image: session?.user.image ?? "",
+            }}
+          />
         </ResizablePanel>
-        <ResizableHandle withHandle className="bg-zinc-200" />
-        <ResizablePanel
-          defaultSize={30}
-          minSize={25}
-          maxSize={40}
-          className="border-r border-zinc-200"
-        >
-          {integrationData.profile.importComplete ? (
-            <MailList
-              userSession={session}
-              integrationId={params.integration}
-            />
-          ) : (
-            <ImportEmails
-              integrationId={params.integration}
-              integrationProfiles={
-                integrationsData?.find(
-                  (i: Integration) => i.id == Number(params.integration)
-                )?.profile
-              }
-            />
-          )}
-        </ResizablePanel>
-        <ResizableHandle withHandle className="bg-zinc-200" />
-        <ResizablePanel defaultSize={50} minSize={30}>
-          {children}
+        <ResizableHandle className="bg-zinc-200" />
+        <ResizablePanel defaultSize={82} minSize={82}>
+          <ResizablePanelGroup direction="vertical">
+            <ResizablePanel minSize={10}>
+              <TopBar />
+            </ResizablePanel>
+            <ResizableHandle />
+            <ResizablePanel minSize={90}>
+              <ResizablePanelGroup direction="horizontal">
+                <ResizablePanel defaultSize={40} minSize={40}>
+                  {integrationData.profile.importComplete ? (
+                    <MailList
+                      userSession={session}
+                      integrationId={params.integration}
+                    />
+                  ) : (
+                    <ImportEmails
+                      integrationId={params.integration}
+                      integrationProfiles={
+                        integrationsData?.find(
+                          (i: Integration) => i.id == Number(params.integration)
+                        )?.profile
+                      }
+                    />
+                  )}
+                </ResizablePanel>
+                {children}
+              </ResizablePanelGroup>
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </ResizablePanel>
       </ResizablePanelGroup>
     </>
