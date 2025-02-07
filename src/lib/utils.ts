@@ -57,7 +57,7 @@ export const fetcher = async (url: string, authToken: string) => {
 };
 
 export function removeNoreplyEmail(from: string): string {
-  return from.replace(/<[^>]+>/, "");
+  return from.replace(/<[^>]+>|"/g, "");
 }
 
 export const groupEmailsByThread = (emails: ParsedEmail[]) => {

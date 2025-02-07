@@ -2,15 +2,30 @@
 
 import { useIntegrations } from "@/context/mailbox";
 import { ParsedEmail } from "@/lib/types/email";
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { CircleX, Download, Forward, MoreVertical, Reply } from "lucide-react";
-import { formatStringDate } from "@/lib/utils";
+import {
+  AtSign,
+  CircleX,
+  Download,
+  Forward,
+  ImageIcon,
+  Link,
+  MoreHorizontal,
+  MoreVertical,
+  Plus,
+  Reply,
+  Send,
+  Smile,
+  Trash2,
+} from "lucide-react";
+import { formatStringDate, removeNoreplyEmail } from "@/lib/utils";
 import DOMPurify from "dompurify";
-import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Textarea } from "@/components/ui/textarea";
 
 export const EmailView = ({ emailTheadId }: { emailTheadId: string }) => {
   const { integrations, currentIntegration } = useIntegrations();
@@ -46,7 +61,7 @@ export const EmailView = ({ emailTheadId }: { emailTheadId: string }) => {
   };
 
   return (
-    <div className="flex h-full flex-col bg-white">
+    <div className="flex h-full flex-col bg-gray-50">
       <div className="flex items-center justify-between border-b border-zinc-200 p-2">
         <div className="flex items-center gap-2">
           <Button
@@ -88,80 +103,160 @@ export const EmailView = ({ emailTheadId }: { emailTheadId: string }) => {
         </Button>
       </div>
       <ScrollArea className="flex-1">
-        <div className="space-y-6 p-6">
-          <EmailThread mail={mail} />
-        </div>
+        {mail.map((email, index) => (
+          <div key={email.id + index} className="p-2 space-y-2">
+            <EmailHeader email={email} />
+            <EmailBody email={email} />
+            {email.attachments.length > 0 && <AttachmentsSection />}{" "}
+          </div>
+        ))}
       </ScrollArea>
-      <div className="bg-gray-100 p-2 m-2 rounded-xl h-28 text-sm border-2">
-        REPLY BLOCK HERE
+      <div className="">
+        <ReplyComposer email={mail[0]} />
       </div>
     </div>
   );
 };
 
-function EmailThread({ mail }: { mail: ParsedEmail[] }) {
+function EmailHeader({ email }: { email: ParsedEmail }) {
   return (
-    <div className="space-y-6">
-      {mail.map((email, index) => (
-        <Fragment key={email.id}>
-          {index > 0 && <Separator className="my-6" />}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">{email.subject}</h2>
-              <div className="text-sm text-zinc-500">
-                {formatStringDate(email.date ?? "")}
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-zinc-500">
-              <div>From: {email.from}</div>
-              <Separator orientation="vertical" className="h-4" />
-              <div>To: {email.to}</div>
-            </div>
-          </div>
-          <div className="space-y-4 text-sm leading-relaxed text-zinc-700">
-            {email.htmlMessage ? (
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(email?.htmlMessage || ""),
-                }}
-                className="prose prose-sm max-w-none overflow-y-auto"
-              />
-            ) : (
-              <div>{email?.plainTextMessage ?? email?.snippet}</div>
-            )}
-          </div>
-          {email.attachments.length > 0 && (
-            <div>
-              <h3 className="font-semibold mb-3">Attachments</h3>
-              <div className="flex gap-4">
-                {email.attachments.map((attachment, i) => (
-                  <AttachmentCard
-                    key={attachment.filename ?? "File" + i}
-                    {...attachment}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </Fragment>
-      ))}
+    <div className="p-3 flex flex-row items-center justify-between border-b border-gray-200">
+      <div className="flex items-start gap-3">
+        <Avatar className="h-10 w-10">
+          <AvatarImage
+            src="https://api.dicebear.com/6.x/personas/svg?seed=km"
+            alt="Kathryn Murphy"
+          />
+          <AvatarFallback>KM</AvatarFallback>
+        </Avatar>
+        <div className="flex-1 space-y-1">
+          <h1 className="text-sm font-semibold">{email.from}</h1>
+          <p className="text-xs text-zinc-500">
+            {formatStringDate(email.date ?? "")}
+          </p>
+        </div>
+      </div>
+      <div className="space-y-2">
+        <div className="text-xs bg-white p-1 rounded-lg w-fit border border-zinc-200">
+          <p className=""> To: {removeNoreplyEmail(email.to[0])}</p>
+        </div>
+      </div>
     </div>
   );
 }
 
-function AttachmentCard({
-  filename,
-  mimeType,
-}: // data,
-{
-  filename: string;
-  // data: string | null;
-  mimeType: string;
+function EmailBody({ email }: { email: ParsedEmail }) {
+  return (
+    <div className="p-4 mt-0">
+      <h2 className="text-lg font-semibold mb-4">{email.subject}</h2>
+      <div className="space-y-4 h-full text-sm leading-relaxed text-zinc-700">
+        {email.htmlMessage ? (
+          <div
+            dangerouslySetInnerHTML={{
+              __html: DOMPurify.sanitize(email?.htmlMessage || ""),
+            }}
+            className="prose prose-sm max-w-none overflow-y-auto"
+          />
+        ) : (
+          <div>{email?.plainTextMessage ?? email?.snippet}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AttachmentsSection({
+  attachments = [],
+}: {
+  attachments?: {
+    filename: string;
+    mimeType: string;
+    data: string | null;
+  }[];
 }) {
   return (
-    <div className="rounded-lg border border-zinc-200 p-3 text-sm hover:bg-zinc-50 transition-colors">
-      <div className="font-medium">{filename}</div>
-      <div className="text-zinc-500">{mimeType}</div>
+    <div className="p-3">
+      <h3 className="text-sm font-semibold flex items-center gap-2">
+        Attachments <span className="text-zinc-500">(4 files)</span>
+      </h3>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {attachments.map((attachment, i) => (
+          <div key={attachment.filename + i} className="group relative">
+            <div className="aspect-[4/3] rounded-lg overflow-hidden border border-zinc-200">
+              {/* <img
+                src={attachment.thumbnail || "/placeholder.svg"}
+                alt={attachment.name}
+                className="w-full h-full object-cover"
+              /> */}
+            </div>
+            <div className="mt-2">
+              <div className="flex items-center gap-1">
+                <img
+                  src="/placeholder.svg?height=16&width=16"
+                  className="w-4 h-4"
+                  alt="Figma icon"
+                />
+                <span className="text-sm font-medium">
+                  {attachment.filename}
+                </span>
+              </div>
+              <p className="text-xs text-zinc-500">{attachment.mimeType}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ReplyComposer({ email }: { email: ParsedEmail }) {
+  console.log("Email: ", email);
+  return (
+    <div className="border rounded-xl m-2 bg-white">
+      <div className="p-2 space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-zinc-500">To:</span>
+          <div className="flex items-center p-1 px-2 bg-zinc-200 rounded-lg">
+            <span className="text-xs">Kathryn Murphy</span>
+          </div>
+        </div>
+        <div className="border-b"></div>
+        <Textarea
+          placeholder="Hey Kathryn,"
+          className="min-h-[60px] resize-none border-0 focus-visible:ring-0 p-0 text-xs shadow-none"
+        />
+        <div className="flex items-center justify-between pt-1">
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Plus className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Smile className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <ImageIcon className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Link className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <AtSign className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+            <Button className="bg-indigo-600 hover:bg-indigo-700">
+              <Send className="h-4 w-4 mr-2" />
+              Send
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
