@@ -5,7 +5,7 @@ import {
   cn,
   formatStringDate,
   groupEmailsByThread,
-  removeNoreplyEmail,
+  nameStrParse,
 } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -324,7 +324,7 @@ function EmailItem({
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           <div className="font-semibold text-sm">
-            {removeNoreplyEmail(email.from)}
+            {nameStrParse(email.from)}
           </div>
           {email.labelIds.includes("UNREAD") && (
             <span className="h-2 w-2 rounded-full bg-indigo-600" />

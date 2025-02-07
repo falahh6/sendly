@@ -56,8 +56,21 @@ export const fetcher = async (url: string, authToken: string) => {
   return response.json();
 };
 
-export function removeNoreplyEmail(from: string): string {
-  return from.replace(/<[^>]+>|"/g, "");
+export const emailStrParse = (email: string) => {
+  const match = email.match(/<(.*?)>/);
+  if (match) {
+    return match[1];
+  }
+
+  return email.replace(/".*?"\s*|<.*?>/g, "").trim();
+};
+
+export const nameStrParse = (email: string) => {
+  return email.replace(/<[^>]+>|"/g, "");
+};
+
+export function isGmailEmail(email: string) {
+  return typeof email === "string" && email.endsWith("@gmail.com");
 }
 
 export const groupEmailsByThread = (emails: ParsedEmail[]) => {
