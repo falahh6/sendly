@@ -54,9 +54,9 @@ export const Selector = ({ integrationId }: { integrationId: number }) => {
           value={integrationId.toString()}
           onValueChange={valChangeHandler}
         >
-          <SelectTrigger className="text-left w-fit h-fit rounded-xl ring-0">
+          <SelectTrigger className="text-left w-full h-fit rounded-xl ring-0">
             {isPending ? (
-              <div className="w-20 h-8 flex flex-row items-center justify-center">
+              <div className="w-full h-8 flex flex-row items-center justify-center">
                 <Loader className="mr-2 h-4 w-4 animate-spin" />
               </div>
             ) : (

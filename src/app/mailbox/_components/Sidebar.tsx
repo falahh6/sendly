@@ -1,89 +1,104 @@
-"use client";
-
-import { useHash } from "@/app/hooks/useHash";
+import {
+  Mail,
+  Star,
+  Clock,
+  Send,
+  FileEdit,
+  Trash2,
+  Plus,
+  MailPlus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { Mails, Pencil, Send, Star, Trash } from "lucide-react";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
-const CustomSelectableButton = ({
-  isSelected,
-  children,
-  name,
+import { NavButton } from "./SidebarButtons";
+import { Selector } from "@/components/mailbox/selector";
+import { UserProfile } from "@/components/auth/UserProfile";
+import Image from "next/image";
+import Link from "next/link";
+
+export default function Sidebar({
+  isCollapsed,
+  integrationId,
+  user,
 }: {
-  isSelected: boolean;
-  children: React.ReactNode;
-  name: string;
-}) => {
-  const pathname = usePathname();
-  const hash = useHash();
-
-  useEffect(() => {
-    if (window.location.href.length == 0) {
-      window.location.href = pathname + "#inbox";
-    }
-  }, []);
-
+  isCollapsed: boolean;
+  integrationId: string;
+  user: {
+    name: string;
+    email: string;
+    image?: string;
+  };
+}) {
   return (
-    <Button
-      className={cn(
-        "rounded-xl border-none shadow-none hover:border border-gray-00 hover:bg-gray-200",
-        isSelected && "bg-gray-00",
-        hash.replace("#", "") == name &&
-          "bg-gray-500 text-white border-gray-400"
-      )}
-      variant={"outline"}
-      onClick={() => {
-        window.location.href = pathname + "#" + name;
-      }}
-    >
-      {children}
-    </Button>
-  );
-};
+    <div className="flex h-full flex-col bg-white">
+      <div className="p-4 space-y-4 border-b border-zinc-200">
+        <Link href="/mailbox" className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-lg  flex items-center justify-center">
+            <Image src="/logo.svg" alt="Sendly" width={28} height={28} />
+          </div>
+          {!isCollapsed && <h1 className="text-lg font-normal">Sendly</h1>}
+        </Link>
 
-const SideBar = () => {
-  const pathname = usePathname();
-  const [isMailSelected, setIsMailSelected] = useState(false);
+        <Selector integrationId={Number(integrationId)} />
 
-  useEffect(() => {
-    if (pathname.split("/").length > 3) {
-      setIsMailSelected(true);
-    } else {
-      setIsMailSelected(false);
-    }
-  }, [pathname]);
-
-  return (
-    <div className="flex flex-col items-center w-full gap-4 h-full">
-      <h4 className="text-sm">MAIN</h4>
-      <div className="flex flex-col gap-2 items-start">
-        <CustomSelectableButton name="inbox" isSelected={true}>
-          <Mails className="h-6 w-6" /> {!isMailSelected && "Inbox"}
-        </CustomSelectableButton>
-        <CustomSelectableButton name="starred" isSelected={isMailSelected}>
-          <Star className="h-6 w-6" />
-          {!isMailSelected && "Starred"}
-        </CustomSelectableButton>
-        <CustomSelectableButton name="sent" isSelected={isMailSelected}>
-          <Send className="h-6 w-6" />
-          {!isMailSelected && "Sent"}
-        </CustomSelectableButton>
+        <Button
+          className="w-full bg-indigo-600 hover:bg-indigo-700 rounded-xl"
+          size="lg"
+        >
+          {isCollapsed ? (
+            <Plus className="h-4 w-4" />
+          ) : (
+            <>
+              <MailPlus className="h-4 w-4" /> Compose
+            </>
+          )}
+        </Button>
       </div>
-      <h4 className="text-sm">Other</h4>
-      <div className="flex flex-col gap-2 items-start">
-        <CustomSelectableButton name="drafts" isSelected={isMailSelected}>
-          <Pencil className="h-6 w-6" /> {!isMailSelected && "Drafts"}
-        </CustomSelectableButton>
-
-        <CustomSelectableButton name="trash" isSelected={isMailSelected}>
-          <Trash className="h-6 w-6" />
-          {!isMailSelected && "Trash"}
-        </CustomSelectableButton>
+      <ScrollArea className="flex-1 px-2">
+        <div className="space-y-4 p-2">
+          <nav className="space-y-1">
+            <NavButton
+              icon={<Mail className="h-4 w-4" />}
+              label="Inbox"
+              badge="12,923"
+              isCollapsed={isCollapsed}
+            />
+            <NavButton
+              icon={<Star className="h-4 w-4" />}
+              label="Starred"
+              badge="8"
+              isCollapsed={isCollapsed}
+            />
+            <NavButton
+              icon={<Clock className="h-4 w-4" />}
+              label="Snoozed"
+              badge="132"
+              isCollapsed={isCollapsed}
+            />
+            <NavButton
+              icon={<Send className="h-4 w-4" />}
+              label="Sent"
+              badge="264"
+              isCollapsed={isCollapsed}
+            />
+            <NavButton
+              icon={<FileEdit className="h-4 w-4" />}
+              label="Drafts"
+              isCollapsed={isCollapsed}
+            />
+            <NavButton
+              icon={<Trash2 className="h-4 w-4" />}
+              label="Trash"
+              badge="264"
+              isCollapsed={isCollapsed}
+            />
+          </nav>
+        </div>
+      </ScrollArea>
+      <div className="m-4 space-y-4 bg-white">
+        <UserProfile user={user} />
       </div>
     </div>
   );
-};
-
-export default SideBar;
+}

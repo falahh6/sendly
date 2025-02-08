@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "./api/auth/[...nextauth]/authOptions";
 import Integrations from "@/components/integrations/google";
 import { redirect } from "next/navigation";
+import { Login } from "@/components/auth/Login";
 
 const SocialLink = ({
   href,
@@ -65,14 +66,12 @@ export default async function Home() {
       </div>
       <div className="h-[30vh] max-sm:h-[20vh] p-10 ">
         <div className="flex flex-col md:flex-row gap-4 justify-between">
-          <div className="space-x-3">
+          <div className="space-x-3 flex flex-row items-center">
             <Button className="w-full xl:w-auto rounded-xl" disabled>
               Coming soon
             </Button>
+            <Login />
           </div>{" "}
-          {/* <div className="flex flex-row max-sm:w-full items-center gap-4">
-            <ContinueWithGoogle /> <Logout />
-          </div> */}
         </div>
         <div>
           {session?.user ? (
@@ -105,9 +104,11 @@ export default async function Home() {
             Have an Idea? write{" "}
             <Link
               className="text-blue-500"
-              href={"mailto:contact@falah.in?subject=New%20Idea%20-%20Sendly"}
+              href={
+                "mailto:work.falah6@gmail.com?subject=New%20Idea%20-%20Sendly"
+              }
             >
-              contact@falah.in
+              work.falah6@gmail.com
             </Link>
           </p>
         </div>

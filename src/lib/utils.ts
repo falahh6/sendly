@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { ParsedEmail } from "./types/email";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -55,6 +56,42 @@ export const fetcher = async (url: string, authToken: string) => {
   return response.json();
 };
 
-export function removeNoreplyEmail(from: string): string {
-  return from.replace(/<[^>]+>/, "");
+export const emailStrParse = (email: string) => {
+  const match = email.match(/<(.*?)>/);
+  if (match) {
+    return match[1];
+  }
+
+  return email.replace(/".*?"\s*|<.*?>/g, "").trim();
+};
+
+export const nameStrParse = (email: string) => {
+  return email.replace(/<[^>]+>|"/g, "");
+};
+
+export function isGmailEmail(email: string) {
+  return typeof email === "string" && email.endsWith("@gmail.com");
 }
+
+export const groupEmailsByThread = (emails: ParsedEmail[]) => {
+  const threadMap = new Map<string, ParsedEmail[]>();
+
+  emails.forEach((email) => {
+    if (!email.threadId) {
+      threadMap.set(email.id, [email]);
+    } else {
+      if (!threadMap.has(email.threadId)) {
+        threadMap.set(email.threadId, []);
+      }
+      threadMap.get(email.threadId)?.push(email);
+    }
+  });
+
+  return Array.from(threadMap.entries()).map(([threadId, emails]) => ({
+    threadId,
+    emails: emails.sort(
+      (a, b) =>
+        new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()
+    ),
+  }));
+};

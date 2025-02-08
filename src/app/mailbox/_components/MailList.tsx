@@ -1,15 +1,21 @@
 "use client";
 
 import { ParsedEmail } from "@/lib/types/email";
-import { cn, formatStringDate, removeNoreplyEmail } from "@/lib/utils";
+import {
+  cn,
+  formatStringDate,
+  groupEmailsByThread,
+  nameStrParse,
+} from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useIntegrations } from "@/context/mailbox";
 
 import { ablyClient, getAblyInstance } from "@/lib/ably";
 import { Session } from "next-auth";
-import { Loader } from "lucide-react";
 import { useHash } from "@/app/hooks/useHash";
+
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const MailList = ({
   integrationId,
@@ -18,12 +24,28 @@ export const MailList = ({
   integrationId: string;
   userSession: Session | null;
 }) => {
-  const [emailsList, setEmailsList] = useState<ParsedEmail[]>([]);
+  const [emailsList, setEmailsList] = useState<
+    { threadId: string; emails: ParsedEmail[] }[]
+  >([]);
   const router = useRouter();
   const pathname = usePathname();
   const [selectedMail, setSelectedMail] = useState(pathname.split("/")[3]);
   const [fetchLoading, setFetchLoading] = useState(true);
   const hash = useHash();
+
+  useEffect(() => {
+    if (pathname.split("/").length > 3) {
+      setSelectedMail(pathname.split("/")[3]);
+    } else {
+      setSelectedMail("");
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!hash) {
+      router.push(`/mailbox/${integrationId}/#inbox`);
+    }
+  }, []);
 
   const fetchEmails = async () => {
     try {
@@ -33,14 +55,15 @@ export const MailList = ({
           headers: {
             auth: `${userSession?.accessToken}`,
           },
-          // cache: "force-cache",
+          cache: "force-cache",
           method: "GET",
         }
       );
 
       const data = await response.json();
       if (data.mails) {
-        updateEmailData(data.mails);
+        console.log("groupEmailsByThread : ", groupEmailsByThread(data.mails));
+        updateEmailData(groupEmailsByThread(data.mails));
       }
     } catch (error) {
       console.error("Error fetching emails:", error);
@@ -83,7 +106,7 @@ export const MailList = ({
 
     console.log("Filtered Emails: ", filteredEmails);
 
-    setEmailsList(filteredEmails || []);
+    setEmailsList(groupEmailsByThread(filteredEmails || []));
   }, [hash, fetchLoading]);
 
   const filterByHash = (emails: ParsedEmail[], hash: string) => {
@@ -140,20 +163,17 @@ export const MailList = ({
     return emails;
   };
 
-  const updateEmailData = (emails: ParsedEmail[]) => {
-    const sortedEmails = emails.sort(
-      (a: ParsedEmail, b: ParsedEmail) =>
-        new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()
-    );
-
-    setEmailsList(sortedEmails);
+  const updateEmailData = (
+    groupedThreads: { threadId: string; emails: ParsedEmail[] }[]
+  ) => {
+    setEmailsList(groupedThreads);
 
     const updatededIntegrationsWithEmail = IntegrationsCtx?.map(
       (integration) => {
         if (integration.id === Number(integrationId)) {
           return {
             ...integration,
-            mails: sortedEmails,
+            mails: groupedThreads.flatMap((thread) => thread.emails),
           };
         }
         return integration;
@@ -175,7 +195,7 @@ export const MailList = ({
     );
 
     if ((currentIntegration?.mails?.length ?? 0) > 0) {
-      setEmailsList(currentIntegration?.mails ?? []);
+      setEmailsList(groupEmailsByThread(currentIntegration?.mails ?? []));
       setFetchLoading(false);
     }
 
@@ -198,27 +218,50 @@ export const MailList = ({
 
       if (data.data.message === "new-email") {
         const email = data.data.body.email;
-        updateEmailData([email, ...emailsList]);
-      }
+        const threadIndex = emailsList.findIndex(
+          (t) => t.threadId === email.threadId
+        );
 
-      if (data.data.message === "delete-email") {
-        const messageId = data.data.body.messageId;
-        updateEmailData(emailsList.filter((email) => email.id !== messageId));
+        if (threadIndex !== -1) {
+          // Add to existing thread
+          const updatedThreads = [...emailsList];
+          updatedThreads[threadIndex].emails.unshift(email);
+          updateEmailData(updatedThreads);
+        } else {
+          // New thread
+          updateEmailData([
+            { threadId: email.threadId, emails: [email] },
+            ...emailsList,
+          ]);
+        }
       }
 
       if (data.data.message === "label-change") {
         const messageId = data.data.body.messageId;
-        console.log("EMAILs : ", emailsList);
-        const email = emailsList.find((email) => email.messageId == messageId)!;
-        if (email) {
-          const labels = data.data.body.updatedLabels;
-          const updatedEmail = updateLabels(email, labels);
+        const updatedLabels = data.data.body.updatedLabels;
+        const updatedThreads = emailsList.map((thread) => ({
+          ...thread,
+          emails: thread.emails.map((email) => {
+            if (email.id === messageId) {
+              return updateLabels(email, updatedLabels);
+            }
+            return email;
+          }),
+        }));
 
-          updateEmailData([
-            updatedEmail,
-            ...emailsList.filter((email) => email.messageId !== messageId),
-          ]);
-        }
+        updateEmailData(updatedThreads);
+      }
+
+      if (data.data.message === "delete-email") {
+        const messageId = data.data.body.messageId;
+        const updatedThreads = emailsList
+          .map((thread) => ({
+            ...thread,
+            emails: thread.emails.filter((email) => email.id !== messageId),
+          }))
+          .filter((thread) => thread.emails.length > 0); // Remove empty threads
+
+        updateEmailData(updatedThreads);
       }
     });
 
@@ -230,68 +273,68 @@ export const MailList = ({
   }, [integrationId, emailsList]);
 
   return (
-    <div className="h-full flex flex-col justify-between">
-      {/* <div className="h-fit max-h-[12%] border-b">
-        <h1 className="text-lg font-semibold p-2">Emails</h1>
-      </div> */}
-      <div className="max-h-full overflow-y-auto overflow-x-hidden">
-        {fetchLoading && (
-          <div className="w-full flex flex-row justify-center items-center h-full">
-            <Loader className="mr-2 animate-spin h-4 w-4" />{" "}
-            <span>Loading...</span>
-          </div>
-        )}
-        {emailsList?.length === 0 && (
-          <div className="w-full flex flex-row justify-center items-center h-full py-6">
-            <p>No emails found</p>
-          </div>
-        )}
-        {emailsList.map((email) => (
-          <div
-            role="button"
-            tabIndex={0}
-            key={email.id}
-            className={cn(
-              "text-sm border-b w-full p-2 hover:bg-gray-100 hover:cursor-pointer",
-              selectedMail === email.id && "bg-gray-100",
-              email.labelIds.includes("UNREAD") && "font-semibold"
-            )}
-            onClick={() => selectMailHandler(email.id)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                selectMailHandler(email.id);
-              }
-            }}
-          >
-            <div className="p-2 flex flex-row gap-2">
-              <div className="w-full">
-                <div className="w-full flex flex-row justify-between items-center">
-                  <p className="text-base font-semibold">
-                    {removeNoreplyEmail(email.from)}
-                  </p>
-                  <span className="text-xs">
-                    {formatStringDate(email.date!)}
-                  </span>
-                </div>
-                <p className="text-sm">{email.subject}</p>
-              </div>
-            </div>
-            <div className="flex flex-row gap-2">
-              {email.labelIds.map((label) => (
-                <p
-                  key={label}
-                  className="rounded-md border text-[10px] px-1 bg-gray-100"
-                >
-                  {label}
-                </p>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="h-fit max-h-[8%] bg-gray-100 text-sm text-right w-full mr-2">
-        <p className="p-2">Total emails: {emailsList.length}</p>
-      </div>
+    <div className="flex h-full flex-col bg-white">
+      <ScrollArea className="flex-1">
+        <div className="space-y-2 p-2 pr-4">
+          {emailsList &&
+            emailsList.map(({ threadId, emails }) => {
+              const latestEmail = emails[0]; // Show the most recent email as the preview
+
+              return (
+                <EmailItem
+                  key={threadId}
+                  email={latestEmail}
+                  selectMailHandler={selectMailHandler}
+                  selectedMail={selectedMail}
+                />
+              );
+            })}
+        </div>
+      </ScrollArea>
     </div>
   );
 };
+
+function EmailItem({
+  email,
+  selectMailHandler,
+  selectedMail,
+}: {
+  email: ParsedEmail;
+  selectMailHandler: (id: string) => void;
+  selectedMail: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col gap-1 rounded-lg border border-transparent p-2 transition-colors hover:bg-indigo-50",
+        selectedMail == email.threadId &&
+          "bg-indigo-50 border-l-4 border-indigo-600 shadow-sm shadow-indigo-200"
+      )}
+      role="button"
+      tabIndex={0}
+      key={email.id}
+      onClick={() => selectMailHandler(email.threadId)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          selectMailHandler(email.id);
+        }
+      }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <div className="font-semibold text-sm">
+            {nameStrParse(email.from)}
+          </div>
+          {email.labelIds.includes("UNREAD") && (
+            <span className="h-2 w-2 rounded-full bg-indigo-600" />
+          )}
+        </div>
+        <div className="text-xs text-zinc-500">
+          {formatStringDate(email.date ?? "")}
+        </div>
+      </div>
+      <div className="text-sm font-medium">{email.subject}</div>
+    </div>
+  );
+}

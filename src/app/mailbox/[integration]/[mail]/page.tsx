@@ -1,4 +1,6 @@
-import { ResizablePanel } from "@/components/ui/resizable";
+"use client";
+
+import { ResizableHandle, ResizablePanel } from "@/components/ui/resizable";
 import { EmailView } from "./_components/emailView";
 
 const Page = ({
@@ -9,13 +11,12 @@ const Page = ({
   };
 }) => {
   return (
-    <ResizablePanel
-      className="p-4 bg-neutral-100 rounded-lg border"
-      defaultSize={55}
-      minSize={45}
-    >
-      <EmailView emailId={params.mail} />
-    </ResizablePanel>
+    <>
+      <ResizableHandle className="bg-zinc-200" />
+      <ResizablePanel defaultSize={60} minSize={60}>
+        <EmailView emailTheadId={params.mail} />
+      </ResizablePanel>
+    </>
   );
 };
 
