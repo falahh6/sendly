@@ -281,6 +281,7 @@ function ReplyComposer({ email }: { email: ParsedEmail }) {
                     setEmailToInput("");
                   }
                 }}
+                placeholder="Add more people"
                 onKeyDown={(e) => {
                   console.log("Key: ", e.key);
                   if (e.key === "Backspace" && emailToInput === "") {

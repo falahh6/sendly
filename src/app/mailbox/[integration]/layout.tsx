@@ -87,7 +87,7 @@ const MailboxLayout = async ({
         <ResizableHandle className="bg-zinc-200" />
         <ResizablePanel defaultSize={82} minSize={82}>
           <ResizablePanelGroup direction="vertical">
-            <ResizablePanel minSize={10}>
+            <ResizablePanel className="h-fit">
               <TopBar />
             </ResizablePanel>
             <ResizableHandle />

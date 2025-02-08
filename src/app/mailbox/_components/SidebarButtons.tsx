@@ -33,8 +33,9 @@ export function NavButton({
     <Button
       variant="ghost"
       className={cn(
-        "w-full justify-start gap-2",
-        isActive() && "bg-zinc-100 text-zinc-900"
+        "w-full justify-start gap-2 hover:bg-indigo-50 hover:text-indigo-400 p-2 rounded-lg",
+        isActive() &&
+          "border border-indigo-300 text-indigo-500 bg-indigo-100 hover:text-indigo-500"
       )}
       onClick={() => {
         handleSidebarOptionsClick();
@@ -44,11 +45,7 @@ export function NavButton({
       {!isCollapsed && (
         <>
           {label}
-          {badge && (
-            <Badge className="ml-auto" variant="secondary">
-              {badge}
-            </Badge>
-          )}
+          {badge && <span className="ml-auto text-xs">{badge}</span>}
         </>
       )}
     </Button>

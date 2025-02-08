@@ -36,6 +36,7 @@
     "cohere-ai": "^7.15.0",
     "cookie": "^1.0.2",
     "dompurify": "^3.2.3",
+    "framer-motion": "^12.4.1",
     "google-auth-library": "^9.15.0",
     "googleapis": "^144.0.0",
     "inngest": "^3.28.0",
@@ -58,6 +59,7 @@
     "swr": "^2.2.5",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
+    "usehooks-ts": "^3.1.1",
     "ws": "^8.18.0",
     "zod": "^3.23.8"
   },
