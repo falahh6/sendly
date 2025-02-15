@@ -69,7 +69,7 @@ export const EmailView = ({ emailTheadId }: { emailTheadId: string }) => {
   };
 
   return (
-    <div className="flex h-full flex-col bg-gray-50">
+    <div className="flex h-full flex-col bg-gray-100">
       <div className="flex items-center justify-between border-b border-zinc-200 p-2">
         <div className="flex items-center gap-2">
           <Button
