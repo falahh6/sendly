@@ -3,6 +3,7 @@
 import { ParsedEmail } from "@/lib/types/email";
 import {
   cn,
+  decodeHTML,
   elipsisText,
   formatStringDate,
   groupEmailsByThread,
@@ -48,7 +49,7 @@ export const MailList = ({
 
   useEffect(() => {
     if (!hash) {
-      router.push(`/mailbox/${integrationId}/#inbox`);
+      router.push(`${pathname}#inbox`);
     }
   }, []);
 
@@ -228,12 +229,10 @@ export const MailList = ({
         );
 
         if (threadIndex !== -1) {
-          // Add to existing thread
           const updatedThreads = [...emailsList];
           updatedThreads[threadIndex].emails.unshift(email);
           updateEmailData(updatedThreads);
         } else {
-          // New thread
           updateEmailData([
             { threadId: email.threadId, emails: [email] },
             ...emailsList,
@@ -282,7 +281,7 @@ export const MailList = ({
       <div className="flex flex-row items-center justify-between p-4 py-2  border-b">
         <div className="flex flex-row gap-2 items-center px-1">
           <Checkbox className="h-4 w-4" />{" "}
-          <h3 className="text-lg"> Mail Inbox</h3>{" "}
+          <h3 className="text-base"> Mail Inbox</h3>{" "}
           <p className="text-xs text-gray-400 ml-4">
             {" "}
             {emailsList.length} Messages
@@ -291,7 +290,7 @@ export const MailList = ({
         <div className="flex flex-row gap-4 items-center">
           <Ellipsis className="h-4 w-4" />
           <RotateCw className="h-4 w-4" />
-          <SearchAndQuickActions onlyIcons={selectedMail.length > 0} />
+          <SearchAndQuickActions onlyIcons={selectedMail?.length > 0} />
         </div>
       </div>
       <ScrollArea className="flex-1">
@@ -305,10 +304,10 @@ export const MailList = ({
             ))}
           </div>
         ) : (
-          <div className="pr-4">
+          <div className="">
             {emailsList &&
               emailsList.map(({ threadId, emails }) => {
-                const latestEmail = emails[0]; // Show the most recent email as the preview
+                const latestEmail = emails[0];
 
                 return (
                   <EmailItem
@@ -338,7 +337,7 @@ function EmailItem({
   return (
     <div
       className={cn(
-        "flex flex-col gap-1 p-1 px-3 transition-colors hover:bg-indigo-50 border-b border-gray-100",
+        "flex flex-col gap-1 py-2 px-3 transition-colors hover:bg-indigo-50 border-b border-gray-100",
         selectedMail == email.threadId &&
           "bg-indigo-50 border-l-4 border-indigo-600 shadow-sm shadow-indigo-200 border-b-0"
       )}
@@ -352,7 +351,7 @@ function EmailItem({
         }
       }}
     >
-      <div className="flex flex-row items-start gap-4 p-1 w-full">
+      <div className="flex flex-row items-start gap-4 w-full">
         <Checkbox className="h-4 w-4 mt-1" />
         <div className="w-full">
           <div className="flex flex-col gap-0">
@@ -371,7 +370,10 @@ function EmailItem({
             </div>
             <div className="text-xs font-medium">{email.subject}</div>
             <div className="text-xs text-gray-400 truncate text-ellipsis w-full pr-2">
-              {elipsisText(email.snippet, selectedMail ? 50 : 150)}
+              {elipsisText(
+                decodeHTML(email.snippet) ?? "",
+                selectedMail ? 50 : 150
+              )}
             </div>
             <div className="flex flex-row items-center justify-between w-full">
               <div className="pt-2">

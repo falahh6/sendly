@@ -5,7 +5,6 @@ import {
   Send,
   FileEdit,
   Trash2,
-  Plus,
   MailPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -47,7 +46,7 @@ export default function Sidebar({
           size="lg"
         >
           {isCollapsed ? (
-            <Plus className="h-4 w-4" />
+            <MailPlus className="h-4 w-4" />
           ) : (
             <>
               <MailPlus className="h-4 w-4" /> Compose

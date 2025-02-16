@@ -103,3 +103,8 @@ export const elipsisText = (text: string, maxLength: number) => {
 
   return text;
 };
+
+export const decodeHTML = (html: string) => {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  return doc.documentElement.textContent;
+};

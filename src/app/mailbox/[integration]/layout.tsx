@@ -69,7 +69,15 @@ const MailboxLayout = async ({
     >
       <ResizablePanel
         defaultSize={18}
-        minSize={18}
+        maxSize={18}
+        className="min-w-[50px] border-r border-zinc-200"
+      >
+        system sidebar
+      </ResizablePanel>
+      <ResizableHandle className="bg-zinc-200" />
+
+      <ResizablePanel
+        defaultSize={18}
         maxSize={18}
         className="min-w-[50px] border-r border-zinc-200"
       >
@@ -84,7 +92,7 @@ const MailboxLayout = async ({
         />
       </ResizablePanel>
       <ResizableHandle className="bg-zinc-200" />
-      <ResizablePanel defaultSize={82} minSize={82}>
+      <ResizablePanel defaultSize={82} minSize={75}>
         <ResizablePanelGroup direction="horizontal">
           <ResizablePanel defaultSize={40} minSize={40}>
             <div>
