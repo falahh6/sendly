@@ -24,7 +24,6 @@ import {
   Smile,
   Square,
   Trash,
-  Trash2,
   X,
 } from "lucide-react";
 import {
