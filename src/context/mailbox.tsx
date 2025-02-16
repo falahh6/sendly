@@ -16,6 +16,9 @@ interface IntegrationContextType {
   setIntegrations: Dispatch<SetStateAction<Integration[]>>;
   currentIntegration: Integration | undefined;
   setCurrentIntegration: Dispatch<SetStateAction<Integration | undefined>>;
+
+  selectedMail: string | undefined;
+  setSelectedMail: Dispatch<SetStateAction<string | undefined>>;
 }
 
 const IntegrationContext = createContext<IntegrationContextType | undefined>(
@@ -36,14 +39,25 @@ export function MailboxProvider({
     integrationsData || []
   );
 
+  const [selectedMail, setSelectedMail] = useState<string | undefined>();
+
   const value = useMemo(
     () => ({
       integrations,
       currentIntegration,
       setCurrentIntegration,
       setIntegrations,
+      selectedMail,
+      setSelectedMail,
     }),
-    [integrations, currentIntegration, setCurrentIntegration, setIntegrations]
+    [
+      integrations,
+      currentIntegration,
+      setCurrentIntegration,
+      setIntegrations,
+      selectedMail,
+      setSelectedMail,
+    ]
   );
 
   return (

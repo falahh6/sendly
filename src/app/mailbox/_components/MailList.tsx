@@ -35,7 +35,6 @@ export const MailList = ({
   >([]);
   const router = useRouter();
   const pathname = usePathname();
-  const [selectedMail, setSelectedMail] = useState(pathname.split("/")[3]);
   const [fetchLoading, setFetchLoading] = useState(true);
   const hash = useHash();
 
@@ -82,6 +81,8 @@ export const MailList = ({
     setIntegrations,
     setCurrentIntegration,
     integrations: IntegrationsCtx,
+    selectedMail,
+    setSelectedMail,
   } = useIntegrations();
 
   const mailboxId = pathname.split("/")[2];
@@ -263,7 +264,7 @@ export const MailList = ({
             ...thread,
             emails: thread.emails.filter((email) => email.id !== messageId),
           }))
-          .filter((thread) => thread.emails.length > 0); // Remove empty threads
+          .filter((thread) => thread.emails.length > 0);
 
         updateEmailData(updatedThreads);
       }
@@ -290,7 +291,7 @@ export const MailList = ({
         <div className="flex flex-row gap-4 items-center">
           <Ellipsis className="h-4 w-4" />
           <RotateCw className="h-4 w-4" />
-          <SearchAndQuickActions onlyIcons={selectedMail?.length > 0} />
+          <SearchAndQuickActions onlyIcons={(selectedMail?.length ?? 0) > 0} />
         </div>
       </div>
       <ScrollArea className="flex-1">
@@ -314,7 +315,7 @@ export const MailList = ({
                     key={threadId}
                     email={latestEmail}
                     selectMailHandler={selectMailHandler}
-                    selectedMail={selectedMail}
+                    selectedMail={selectedMail ?? ""}
                   />
                 );
               })}
@@ -337,9 +338,9 @@ function EmailItem({
   return (
     <div
       className={cn(
-        "flex flex-col gap-1 py-2 px-3 transition-colors hover:bg-indigo-50 border-b border-gray-100",
+        "flex flex-col gap-1 py-2 px-5 transition-colors hover:bg-indigo-50 border-b border-gray-100",
         selectedMail == email.threadId &&
-          "bg-indigo-50 border-l-4 border-indigo-600 shadow-sm shadow-indigo-200 border-b-0"
+          "bg-indigo-50 border-l-4 border-indigo-600 shadow-sm shadow-indigo-200 border-b-0 px-4"
       )}
       role="button"
       tabIndex={0}

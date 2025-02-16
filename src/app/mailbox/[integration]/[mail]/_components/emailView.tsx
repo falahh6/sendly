@@ -192,11 +192,6 @@ function EmailHeader({
           </div>
         </div>
       </div>
-      {/* <div className="space-y-2">
-        <div className="text-xs bg-white p-1 rounded-lg w-fit border border-zinc-200">
-          <p className=""> To: {emailStrParse(email.to[0])}</p>
-        </div>
-      </div> */}
     </div>
   );
 }
@@ -211,7 +206,7 @@ function EmailBody({ email }: { email: ParsedEmail }) {
             dangerouslySetInnerHTML={{
               __html: DOMPurify.sanitize(email?.htmlMessage || ""),
             }}
-            className="prose prose-sm max-w-none overflow-y-auto"
+            className="prose prose-sm max-w-none overflow-auto"
           />
         ) : (
           <p className="whitespace-pre-line">
@@ -243,11 +238,11 @@ function AttachmentsSection({
             <div className="aspect-[4/3] rounded-lg overflow-hidden border border-zinc-200"></div>
             <div className="mt-2">
               <div className="flex items-center gap-1">
-                <img
+                {/* <Image
                   src="/placeholder.svg?height=16&width=16"
                   className="w-4 h-4"
                   alt="Figma icon"
-                />
+                /> */}
                 <span className="text-sm font-medium">
                   {attachment.filename}
                 </span>

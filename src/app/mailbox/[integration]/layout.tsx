@@ -8,9 +8,10 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { MailList } from "../_components/MailList";
 import { redirect } from "next/navigation";
 import { Integration } from "@/lib/types/integrations";
-import Sidebar from "../_components/Sidebar";
+import MailBoxSidebar from "../_components/MailboxSidebar";
 import { ImportEmails } from "../_components/ImportEmails";
 import AggMails from "../_components/AggMails";
+import SystemSidebar from "../_components/SystemSidebar";
 
 const getIntegrations = async (authToken: string) => {
   const response = await fetch(
@@ -68,20 +69,33 @@ const MailboxLayout = async ({
       className="min-h-screen bg-zinc-50"
     >
       <ResizablePanel
-        defaultSize={18}
-        maxSize={18}
+        defaultSize={6}
+        minSize={6}
+        maxSize={6}
         className="min-w-[50px] border-r border-zinc-200"
       >
-        system sidebar
+        {session?.user && (
+          <SystemSidebar
+            integrationId={params.integration}
+            user={
+              session.user as {
+                id: number;
+                name: string;
+                email?: string;
+                image?: string;
+              }
+            }
+          />
+        )}
       </ResizablePanel>
       <ResizableHandle className="bg-zinc-200" />
-
       <ResizablePanel
         defaultSize={18}
         maxSize={18}
+        minSize={18}
         className="min-w-[50px] border-r border-zinc-200"
       >
-        <Sidebar
+        <MailBoxSidebar
           isCollapsed={false}
           integrationId={params.integration}
           user={{
@@ -92,7 +106,7 @@ const MailboxLayout = async ({
         />
       </ResizablePanel>
       <ResizableHandle className="bg-zinc-200" />
-      <ResizablePanel defaultSize={82} minSize={75}>
+      <ResizablePanel defaultSize={76} minSize={76}>
         <ResizablePanelGroup direction="horizontal">
           <ResizablePanel defaultSize={40} minSize={40}>
             <div>

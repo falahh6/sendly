@@ -13,7 +13,7 @@ const Page = ({
   return (
     <>
       <ResizableHandle className="bg-zinc-200" />
-      <ResizablePanel defaultSize={60} minSize={50}>
+      <ResizablePanel defaultSize={60} minSize={60} className="overflow-auto">
         <EmailView emailTheadId={params.mail} />
       </ResizablePanel>
     </>
