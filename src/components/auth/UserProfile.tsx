@@ -13,6 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { signOut } from "next-auth/react";
+import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 export function UserProfile({
   user,
@@ -24,13 +26,18 @@ export function UserProfile({
     image?: string;
   };
 }) {
+  const pathname = usePathname();
+  useEffect(() => {
+    console.log("Pathname:", pathname);
+  }, [pathname]);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex flex-row items-center justify-between gap-2 cursor-pointer w-full bg-gray-100 border border-gray-300 rounded-full ">
         <div className="relative">
           <Avatar>
             <AvatarImage src={user.image} alt={user.name} />
-            <AvatarFallback>
+            <AvatarFallback className="text-sm">
               {user.name.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>

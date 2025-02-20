@@ -12,6 +12,7 @@ import MailBoxSidebar from "../_components/MailboxSidebar";
 import { ImportEmails } from "../_components/ImportEmails";
 import AggMails from "../_components/AggMails";
 import SystemSidebar from "../_components/SystemSidebar";
+import { cn } from "@/lib/utils";
 
 const getIntegrations = async (authToken: string) => {
   const response = await fetch(
@@ -109,11 +110,18 @@ const MailboxLayout = async ({
       <ResizablePanel defaultSize={76} minSize={76}>
         <ResizablePanelGroup direction="horizontal">
           <ResizablePanel defaultSize={40} minSize={40}>
-            <div>
-              <div className="h-[12vh]">
-                <AggMails />
-              </div>
-              <div className="h-[88vh]">
+            <div className="h-screen">
+              {integrationData.profile.importComplete && (
+                <div className="h-[12vh]">
+                  <AggMails />
+                </div>
+              )}
+              <div
+                className={cn(
+                  "h-screen bg-white",
+                  integrationData.profile.importComplete && "h-[88vh]"
+                )}
+              >
                 {integrationData.profile.importComplete ? (
                   <MailList
                     userSession={session}

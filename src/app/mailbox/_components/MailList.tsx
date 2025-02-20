@@ -60,7 +60,7 @@ export const MailList = ({
           headers: {
             auth: `${userSession?.accessToken}`,
           },
-          cache: "force-cache",
+          // cache: "force-cache",
           method: "GET",
         }
       );

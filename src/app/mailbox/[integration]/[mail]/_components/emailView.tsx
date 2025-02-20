@@ -73,6 +73,18 @@ export const EmailView = ({ emailTheadId }: { emailTheadId: string }) => {
     router.push(`/mailbox/${currentIntegration?.id}`);
   };
 
+  const [repliesBodyCollapsed, setRepliesBodyCollapsed] = useState<string[]>([
+    mail[mail.length - 1]?.id ?? "",
+  ]);
+
+  const handleRepliesBodyCollapse = (id: string) => {
+    if (repliesBodyCollapsed.includes(id)) {
+      setRepliesBodyCollapsed((prev) => prev.filter((i) => i !== id));
+    } else {
+      setRepliesBodyCollapsed((prev) => [...prev, id]);
+    }
+  };
+
   return (
     <div className="flex h-full flex-col bg-gray-50 relative">
       <div className="flex items-center justify-between border-zinc-200 p-4">
@@ -126,7 +138,7 @@ export const EmailView = ({ emailTheadId }: { emailTheadId: string }) => {
             <span> 2 People</span> <ChevronDown className="h-3 w-3 " />
           </div>
           <div className="bg-purple-200 px-2 py-1 rounded-xl text-xs text-zinc-500 border  flex flex-row gap-1 items-center">
-            <Square strokeWidth="4" color="#a855f7" className="h-3 w-3" />{" "}
+            <Square strokeWidth="4" color="#a855f7" className="h-3 w-3" />
             <span>Work</span>
             <ChevronDown className="h-3 w-3" />
           </div>
@@ -134,13 +146,21 @@ export const EmailView = ({ emailTheadId }: { emailTheadId: string }) => {
       </div>
       <ScrollArea className="flex-1">
         {mail.map((email, index) => (
-          <div key={email.id + index} className="p-2 px-4 space-y-2">
+          <div key={email.id + index} className="p-2 px-4">
             <EmailHeader
               email={email}
               mailboxEmail={currentIntegration?.email ?? ""}
+              handleRepliesBodyCollapse={
+                index !== mail.length - 1 ? handleRepliesBodyCollapse : () => {}
+              }
             />
-            <EmailBody email={email} />
-            {email.attachments.length > 0 && <AttachmentsSection />}{" "}
+            {index !== mail.length - 1 &&
+              repliesBodyCollapsed.includes(email.id) && (
+                <EmailBody email={email} />
+              )}
+            {index === mail.length - 1 && <EmailBody email={email} />}{" "}
+            {/* Always show last email body */}
+            {email.attachments.length > 0 && <AttachmentsSection />}
           </div>
         ))}
       </ScrollArea>
@@ -156,12 +176,19 @@ export const EmailView = ({ emailTheadId }: { emailTheadId: string }) => {
 function EmailHeader({
   email,
   mailboxEmail,
+  handleRepliesBodyCollapse,
 }: {
   email: ParsedEmail;
   mailboxEmail: string;
+  handleRepliesBodyCollapse: (id: string) => void;
 }) {
   return (
-    <div className="p-3 px-4 flex flex-row items-center justify-between border-b border-gray-200">
+    <div
+      onClick={() =>
+        handleRepliesBodyCollapse && handleRepliesBodyCollapse(email.id)
+      }
+      className="p-3 px-4 flex flex-row items-center justify-between border-b border-gray-200 hover:bg-gray-100 hover:cursor-pointer"
+    >
       <div className="flex items-start gap-3">
         <Avatar className="h-10 w-10">
           <AvatarImage
@@ -198,23 +225,24 @@ function EmailHeader({
 
 function EmailBody({ email }: { email: ParsedEmail }) {
   return (
-    <div className="p-4 mt-0">
-      <h2 className="text-lg font-semibold mb-4">{email.subject}</h2>
-      <div className="space-y-4 h-full text-sm leading-relaxed text-zinc-700">
-        {email.htmlMessage ? (
-          <div
-            dangerouslySetInnerHTML={{
-              __html: DOMPurify.sanitize(email?.htmlMessage || ""),
-            }}
-            className="prose prose-sm max-w-none overflow-auto"
-          />
-        ) : (
-          <p className="whitespace-pre-line">
-            {decodeHTML(email?.plainTextMessage ?? email?.snippet)}
-          </p>
-        )}
+    <>
+      <div className="p-4 mt-0">
+        <div className="space-y-4 h-full text-sm leading-relaxed text-zinc-700">
+          {email.htmlMessage ? (
+            <div
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(email?.htmlMessage || ""),
+              }}
+              className="prose prose-sm max-w-none overflow-auto"
+            />
+          ) : (
+            <p className="whitespace-pre-line">
+              {decodeHTML(email?.plainTextMessage ?? email?.snippet)}
+            </p>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -230,7 +258,10 @@ function AttachmentsSection({
   return (
     <div className="p-3">
       <h3 className="text-sm font-semibold flex items-center gap-2">
-        Attachments <span className="text-zinc-500">(4 files)</span>
+        Attachments{" "}
+        <span className="text-zinc-500">
+          ({attachments.length} {attachments.length > 1 ? "files" : "file"})
+        </span>
       </h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {attachments.map((attachment, i) => (
@@ -238,11 +269,6 @@ function AttachmentsSection({
             <div className="aspect-[4/3] rounded-lg overflow-hidden border border-zinc-200"></div>
             <div className="mt-2">
               <div className="flex items-center gap-1">
-                {/* <Image
-                  src="/placeholder.svg?height=16&width=16"
-                  className="w-4 h-4"
-                  alt="Figma icon"
-                /> */}
                 <span className="text-sm font-medium">
                   {attachment.filename}
                 </span>
