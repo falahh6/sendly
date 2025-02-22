@@ -15,9 +15,13 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { AddNewIntegration } from "./_components/addNewIntegration";
+import { UserProfile } from "@/components/auth/UserProfile";
+import { useSession } from "next-auth/react";
 
 const Page = () => {
   const { integrations } = useIntegrations();
+  const { data: session } = useSession();
+
   const [selectedIntegration, setSelectedIntegration] = useState<string | null>(
     integrations.length > 0 ? String(integrations[0]?.id) : null
   );
@@ -28,6 +32,20 @@ const Page = () => {
 
   return (
     <div className="flex items-center justify-center h-screen text-neutral-600">
+      <div className="p-2 absolute top-4 right-4 w-fit">
+        {session && (
+          <UserProfile
+            user={
+              session?.user as {
+                id: number;
+                name: string;
+                email?: string;
+                image?: string;
+              }
+            }
+          />
+        )}
+      </div>
       {mode !== "add-new" ? (
         <div className="text-center">
           <h1 className="text-sm font-normal text-left">Select your mailbox</h1>
@@ -46,10 +64,7 @@ const Page = () => {
               value={String(selectedIntegration ?? integrations[0]?.id)}
             >
               <SelectTrigger className="text-left w-fit h-fit rounded-xl ring-0">
-                <SelectValue
-                  placeholder="Select your Integration"
-                  className="text-left"
-                />
+                <SelectValue placeholder="add-new" className="text-left" />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
                 {integrations.map((integration) => (
@@ -71,7 +86,7 @@ const Page = () => {
                   </SelectItem>
                 ))}
                 <SelectItem key={integrations.length} value="add-new">
-                  <div className="flex flex-row gap-2 w-full">
+                  <div className="flex flex-row gap-2 w-full rounded-xl">
                     <div className="bg-neutral-50 h-6 w-6 rounded-full p-1">
                       <Plus className="h-4 w-4" />
                     </div>

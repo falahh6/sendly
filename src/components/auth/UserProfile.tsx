@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  BadgeCheck,
-  Bell,
-  ChevronsUpDown,
-  CreditCard,
-  LogOut,
-} from "lucide-react";
+import { BadgeCheck, Bell, CreditCard, LogOut } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -19,33 +13,41 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { signOut } from "next-auth/react";
+import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 export function UserProfile({
   user,
 }: {
   user: {
+    id: number;
     name: string;
-    email: string;
+    email?: string;
     image?: string;
   };
 }) {
+  const pathname = usePathname();
+  useEffect(() => {
+    console.log("Pathname:", pathname);
+  }, [pathname]);
+
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex flex-row items-center justify-between gap-2 cursor-pointer w-full p-2 rounded-xl bg-gray-100 border border-gray-300">
-        <Avatar className="h-8 w-8 rounded-xl">
-          <AvatarImage src={user.image} alt={user.name} />
-          <AvatarFallback className="rounded-full border text-xs">
-            {user.name.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-        <div className="grid flex-1 text-left text-sm leading-tight">
-          <span className="truncate font-semibold">{user.name}</span>
-          <span className="truncate text-xs">{user.email}</span>
+      <DropdownMenuTrigger className="flex flex-row items-center justify-between gap-2 cursor-pointer w-full bg-gray-100 border border-gray-300 rounded-full ">
+        <div className="relative">
+          <Avatar>
+            <AvatarImage src={user.image} alt={user.name} />
+            <AvatarFallback className="text-sm">
+              {user.name.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <span className="absolute bottom-0 end-0 size-3 rounded-full border-2 border-background bg-emerald-500">
+            <span className="sr-only">Online</span>
+          </span>
         </div>
-        <ChevronsUpDown className="ml-auto size-4" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-xl"
+        className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-xl ml-10"
         side={"top"}
         align="end"
         sideOffset={4}

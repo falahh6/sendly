@@ -8,9 +8,11 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { MailList } from "../_components/MailList";
 import { redirect } from "next/navigation";
 import { Integration } from "@/lib/types/integrations";
-import Sidebar from "../_components/Sidebar";
+import MailBoxSidebar from "../_components/MailboxSidebar";
 import { ImportEmails } from "../_components/ImportEmails";
-import TopBar from "../_components/TopBar";
+import AggMails from "../_components/AggMails";
+import SystemSidebar from "../_components/SystemSidebar";
+import { cn } from "@/lib/utils";
 
 const getIntegrations = async (authToken: string) => {
   const response = await fetch(
@@ -63,60 +65,86 @@ const MailboxLayout = async ({
   }
 
   return (
-    <>
-      <ResizablePanelGroup
-        direction="horizontal"
-        className="min-h-screen bg-zinc-50"
+    <ResizablePanelGroup
+      direction="horizontal"
+      className="min-h-screen bg-zinc-50"
+    >
+      <ResizablePanel
+        defaultSize={6}
+        minSize={6}
+        maxSize={6}
+        className="min-w-[50px] border-r border-zinc-200"
       >
-        <ResizablePanel
-          defaultSize={18}
-          minSize={18}
-          maxSize={18}
-          className="min-w-[50px] border-r border-zinc-200"
-        >
-          <Sidebar
-            isCollapsed={false}
+        {session?.user && (
+          <SystemSidebar
             integrationId={params.integration}
-            user={{
-              name: session?.user.name ?? "",
-              email: session?.user.email ?? "",
-              image: session?.user.image ?? "",
-            }}
+            user={
+              session.user as {
+                id: number;
+                name: string;
+                email?: string;
+                image?: string;
+              }
+            }
           />
-        </ResizablePanel>
-        <ResizableHandle className="bg-zinc-200" />
-        <ResizablePanel defaultSize={82} minSize={82}>
-          <ResizablePanelGroup direction="vertical">
-            <ResizablePanel className="h-fit">
-              <TopBar />
-            </ResizablePanel>
-            <ResizableHandle />
-            <ResizablePanel minSize={90}>
-              <ResizablePanelGroup direction="horizontal">
-                <ResizablePanel defaultSize={40} minSize={40}>
-                  {integrationData.profile.importComplete ? (
-                    <MailList
-                      userSession={session}
-                      integrationId={params.integration}
-                    />
-                  ) : (
-                    <ImportEmails
-                      integrationId={params.integration}
-                      integrationProfiles={
-                        integrationsData?.find(
-                          (i: Integration) => i.id == Number(params.integration)
-                        )?.profile
-                      }
-                    />
-                  )}
-                </ResizablePanel>
-                {children}
-              </ResizablePanelGroup>
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </ResizablePanel>
-      </ResizablePanelGroup>
-    </>
+        )}
+      </ResizablePanel>
+      <ResizableHandle className="bg-zinc-200" />
+      <ResizablePanel
+        defaultSize={18}
+        maxSize={18}
+        minSize={18}
+        className="min-w-[50px] border-r border-zinc-200"
+      >
+        <MailBoxSidebar
+          isCollapsed={false}
+          integrationId={params.integration}
+          user={{
+            id: session?.user.id ?? 0,
+            name: session?.user.name ?? "",
+            email: session?.user.email ?? "",
+            image: session?.user.image ?? "",
+          }}
+        />
+      </ResizablePanel>
+      <ResizableHandle className="bg-zinc-200" />
+      <ResizablePanel defaultSize={76} minSize={76}>
+        <ResizablePanelGroup direction="horizontal">
+          <ResizablePanel defaultSize={40} minSize={40}>
+            <div className="h-screen">
+              {integrationData.profile.importComplete && (
+                <div className="h-[12vh]">
+                  <AggMails />
+                </div>
+              )}
+              <div
+                className={cn(
+                  "h-screen bg-white",
+                  integrationData.profile.importComplete && "h-[88vh]"
+                )}
+              >
+                {integrationData.profile.importComplete ? (
+                  <MailList
+                    userSession={session}
+                    integrationId={params.integration}
+                  />
+                ) : (
+                  <ImportEmails
+                    integrationId={params.integration}
+                    integrationProfiles={
+                      integrationsData?.find(
+                        (i: Integration) => i.id == Number(params.integration)
+                      )?.profile
+                    }
+                  />
+                )}
+              </div>
+            </div>
+          </ResizablePanel>
+          {children}
+        </ResizablePanelGroup>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   );
 };
 

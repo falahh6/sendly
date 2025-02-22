@@ -33,9 +33,8 @@ export function NavButton({
     <Button
       variant="ghost"
       className={cn(
-        "w-full justify-start gap-2 hover:bg-indigo-50 hover:text-indigo-400 p-2 rounded-lg",
-        isActive() &&
-          "border border-indigo-300 text-indigo-500 bg-indigo-100 hover:text-indigo-500"
+        "w-full justify-start gap-2 hover:bg-indigo-50/50 hover:text-indigo-500 p-2 rounded-lg",
+        isActive() && "text-indigo-500 font-semibold"
       )}
       onClick={() => {
         handleSidebarOptionsClick();
@@ -45,12 +44,43 @@ export function NavButton({
       {!isCollapsed && (
         <>
           {label}
-          {badge && <span className="ml-auto text-xs">{badge}</span>}
+          {badge && (
+            <span className="ml-auto text-xs text-gray-400">{badge}</span>
+          )}
         </>
       )}
     </Button>
   );
 }
+
+export const Labels = ({
+  icon,
+  label,
+  badge,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  badge?: string;
+}) => {
+  const isActive = false;
+  return (
+    <Button
+      variant="ghost"
+      className={cn(
+        "w-full justify-start gap-2 hover:bg-indigo-50/50 hover:text-indigo-500 p-2 rounded-lg",
+        isActive && "text-indigo-500 font-semibold"
+      )}
+    >
+      {icon}
+      <>
+        {label}
+        {badge && (
+          <span className="ml-auto text-xs text-gray-400">{badge}</span>
+        )}
+      </>
+    </Button>
+  );
+};
 
 export function FolderButton({
   label,

@@ -6,20 +6,24 @@ import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
+  Archive,
   AtSign,
+  ChevronDown,
   CircleX,
-  Download,
+  Clock,
+  Ellipsis,
   Forward,
   ImageIcon,
   Link,
   MoreHorizontal,
-  MoreVertical,
   MoveDiagonal,
+  OctagonAlert,
   Plus,
   Reply,
   Send,
   Smile,
-  Trash2,
+  Square,
+  Trash,
   X,
 } from "lucide-react";
 import {
@@ -27,6 +31,8 @@ import {
   emailStrParse,
   nameStrParse,
   isGmailEmail,
+  decodeHTML,
+  elipsisText,
 } from "@/lib/utils";
 import DOMPurify from "dompurify";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -68,14 +74,26 @@ export const EmailView = ({ emailTheadId }: { emailTheadId: string }) => {
     router.push(`/mailbox/${currentIntegration?.id}`);
   };
 
+  const [repliesBodyCollapsed, setRepliesBodyCollapsed] = useState<string[]>([
+    mail[mail.length - 1]?.id ?? "",
+  ]);
+
+  const handleRepliesBodyCollapse = (id: string) => {
+    if (repliesBodyCollapsed.includes(id)) {
+      setRepliesBodyCollapsed((prev) => prev.filter((i) => i !== id));
+    } else {
+      setRepliesBodyCollapsed((prev) => [...prev, id]);
+    }
+  };
+
   return (
-    <div className="flex h-full flex-col bg-gray-50">
-      <div className="flex items-center justify-between border-b border-zinc-200 p-2">
+    <div className="flex h-full flex-col bg-gray-50 relative">
+      <div className="flex items-center justify-between border-zinc-200 p-4">
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="icon"
-            className="text-zinc-500 hover:text-zinc-600"
+            className="text-red-500 hover:text-red-600 hover:bg-red-100"
             onClick={() => closeEmailView()}
           >
             <CircleX className="h-4 w-4" />
@@ -85,37 +103,66 @@ export const EmailView = ({ emailTheadId }: { emailTheadId: string }) => {
             size="icon"
             className="text-zinc-500 hover:text-zinc-600"
           >
-            <Reply className="h-4 w-4" />
+            <Archive className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             className="text-zinc-500 hover:text-zinc-600"
           >
-            <Forward className="h-4 w-4" />
+            <OctagonAlert className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             className="text-zinc-500 hover:text-zinc-600"
           >
-            <Download className="h-4 w-4" />
+            <Clock className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-zinc-500 hover:text-zinc-600"
+          >
+            <Trash className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-zinc-500 hover:text-zinc-600"
+          >
+            <Ellipsis className="h-4 w-4" />
           </Button>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-zinc-500 hover:text-zinc-600"
-        >
-          <MoreVertical className="h-4 w-4" />
-        </Button>
+        <div className="flex flex-row gap-2 items-center">
+          <div className="bg-white px-2 py-1 rounded-xl text-xs text-zinc-500 border flex flex-row gap-1 items-center">
+            <span> 2 People</span> <ChevronDown className="h-3 w-3 " />
+          </div>
+          <div className="bg-purple-200 px-2 py-1 rounded-xl text-xs text-zinc-500 border  flex flex-row gap-1 items-center">
+            <Square strokeWidth="4" color="#a855f7" className="h-3 w-3" />
+            <span>Work</span>
+            <ChevronDown className="h-3 w-3" />
+          </div>
+        </div>
       </div>
       <ScrollArea className="flex-1">
         {mail.map((email, index) => (
-          <div key={email.id + index} className="p-2 space-y-2">
-            <EmailHeader email={email} />
-            <EmailBody email={email} />
-            {email.attachments.length > 0 && <AttachmentsSection />}{" "}
+          <div key={email.id + index} className="p-2 px-4">
+            <EmailHeader
+              email={email}
+              mailboxEmail={currentIntegration?.email ?? ""}
+              handleRepliesBodyCollapse={
+                index !== mail.length - 1 ? handleRepliesBodyCollapse : () => {}
+              }
+            />
+            {index !== mail.length - 1 &&
+              repliesBodyCollapsed.includes(email.id) && (
+                <EmailBody email={email} />
+              )}
+            {index === mail.length - 1 && <EmailBody email={email} />}{" "}
+            {email.attachments.length > 0 && (
+              <AttachmentsSection attachments={email.attachments} />
+            )}
           </div>
         ))}
       </ScrollArea>
@@ -128,9 +175,22 @@ export const EmailView = ({ emailTheadId }: { emailTheadId: string }) => {
   );
 };
 
-function EmailHeader({ email }: { email: ParsedEmail }) {
+function EmailHeader({
+  email,
+  mailboxEmail,
+  handleRepliesBodyCollapse,
+}: {
+  email: ParsedEmail;
+  mailboxEmail: string;
+  handleRepliesBodyCollapse: (id: string) => void;
+}) {
   return (
-    <div className="p-3 flex flex-row items-center justify-between border-b border-gray-200">
+    <div
+      onClick={() =>
+        handleRepliesBodyCollapse && handleRepliesBodyCollapse(email.id)
+      }
+      className="p-3 px-4 flex flex-row items-center justify-between border-b border-gray-200 hover:bg-gray-100 hover:cursor-pointer"
+    >
       <div className="flex items-start gap-3">
         <Avatar className="h-10 w-10">
           <AvatarImage
@@ -140,15 +200,25 @@ function EmailHeader({ email }: { email: ParsedEmail }) {
           <AvatarFallback>KM</AvatarFallback>
         </Avatar>
         <div className="flex-1 space-y-1">
-          <h1 className="text-sm font-semibold">{nameStrParse(email.from)}</h1>
-          <p className="text-xs text-zinc-500">
-            {formatStringDate(email.date ?? "")}
-          </p>
-        </div>
-      </div>
-      <div className="space-y-2">
-        <div className="text-xs bg-white p-1 rounded-lg w-fit border border-zinc-200">
-          <p className=""> To: {emailStrParse(email.to[0])}</p>
+          <div className="text-sm font-medium">
+            {nameStrParse(email.from)}{" "}
+            <span className="ml-2 text-gray-400 text-xs">
+              {emailStrParse(email.from)}
+            </span>
+          </div>
+          <div className="flex flex-row items-center gap-2 text-xs">
+            <div>
+              <p className="">
+                <span className=" text-gray-400">To : </span>{" "}
+                {emailStrParse(email.to[0]) === mailboxEmail
+                  ? "You"
+                  : emailStrParse(email.to[0])}
+              </p>
+            </div>
+            <p className="text-xs text-zinc-500">
+              {formatStringDate(email.date ?? "")}
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -158,17 +228,18 @@ function EmailHeader({ email }: { email: ParsedEmail }) {
 function EmailBody({ email }: { email: ParsedEmail }) {
   return (
     <div className="p-4 mt-0">
-      <h2 className="text-lg font-semibold mb-4">{email.subject}</h2>
-      <div className="space-y-4 h-full text-sm leading-relaxed text-zinc-700">
+      <div className="space-y-4 h-full text-sm text-zinc-700 overflow-auto">
         {email.htmlMessage ? (
           <div
             dangerouslySetInnerHTML={{
               __html: DOMPurify.sanitize(email?.htmlMessage || ""),
             }}
-            className="prose prose-sm max-w-none overflow-y-auto"
+            className="prose prose-sm overflow-auto"
           />
         ) : (
-          <div>{email?.plainTextMessage ?? email?.snippet}</div>
+          <p className="whitespace-pre-line ">
+            {decodeHTML(email?.plainTextMessage ?? email?.snippet)}
+          </p>
         )}
       </div>
     </div>
@@ -178,30 +249,25 @@ function EmailBody({ email }: { email: ParsedEmail }) {
 function AttachmentsSection({
   attachments = [],
 }: {
-  attachments?: {
-    filename: string;
-    mimeType: string;
-    data: string | null;
-  }[];
+  attachments?: ParsedEmail["attachments"];
 }) {
   return (
     <div className="p-3">
       <h3 className="text-sm font-semibold flex items-center gap-2">
-        Attachments <span className="text-zinc-500">(4 files)</span>
+        {attachments.length}{" "}
+        {attachments.length > 1 ? "Attachments" : "Attachment"}
       </h3>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
         {attachments.map((attachment, i) => (
           <div key={attachment.filename + i} className="group relative">
             <div className="aspect-[4/3] rounded-lg overflow-hidden border border-zinc-200"></div>
             <div className="mt-2">
               <div className="flex items-center gap-1">
-                <img
-                  src="/placeholder.svg?height=16&width=16"
-                  className="w-4 h-4"
-                  alt="Figma icon"
-                />
-                <span className="text-sm font-medium">
-                  {attachment.filename}
+                <span className="text-xs font-semibold">
+                  {elipsisText(
+                    attachment.filename.replace(/\.[^/.]+$/, ""),
+                    12
+                  )}
                 </span>
               </div>
               <p className="text-xs text-zinc-500">{attachment.mimeType}</p>
@@ -214,7 +280,8 @@ function AttachmentsSection({
 }
 
 function ReplyComposer({ email }: { email: ParsedEmail }) {
-  console.log("Email: ", email);
+  const [collapsed, setCollapsed] = useState(true);
+
   const inputRef = useRef<HTMLInputElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -244,107 +311,124 @@ function ReplyComposer({ email }: { email: ParsedEmail }) {
   }, [replyMessage]);
 
   return (
-    <div className="border rounded-xl m-2 bg-white">
-      <div className="p-2 space-y-2">
-        <div className="flex flex-row justify-between items-center">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-500">To:</span>
-            <div className="flex items-center gap-1">
-              <div className="w-fit flex flex-row gap-1">
-                {replyToEmails.map((email, i) => (
-                  <span
-                    key={i}
-                    className="text-xs whitespace-nowrap text-blue-500 border border-blue-200 bg-blue-100 rounded-lg p-1 w-fit flex flex-row gap-1 items-center"
-                  >
-                    <p>{email}</p>
-                    {i !== 0 && (
-                      <button
-                        onClick={() => clearHandler(email)}
-                        className="p-0.5 hover:bg-blue-200 rounded-full hover:cursor-pointer"
-                      >
-                        <CircleX className="h-3 w-3" />
-                      </button>
-                    )}
-                  </span>
-                ))}
-              </div>
-              <Input
-                ref={inputRef}
-                value={emailToInput}
-                aria-label={`Remove ${email}`}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setEmailToInput(value);
-                  if (isGmailEmail(value)) {
-                    setReplyToEmails((prev) => [...prev, value]);
+    <div className="">
+      {!collapsed ? (
+        <div className="p-2 space-y-2 border rounded-xl m-2 bg-white">
+          <div className="flex flex-row justify-between items-center">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-zinc-500">To:</span>
+              <div className="flex items-center gap-1">
+                <div className="w-fit flex flex-row gap-1">
+                  {replyToEmails.map((email, i) => (
+                    <span
+                      key={i}
+                      className="text-xs whitespace-nowrap text-blue-500 border border-blue-200 bg-blue-100 rounded-lg p-1 w-fit flex flex-row gap-1 items-center"
+                    >
+                      <p>{email}</p>
+                      {i !== 0 && (
+                        <button
+                          onClick={() => clearHandler(email)}
+                          className="p-0.5 group-hover:bg-blue-200 rounded-full hover:cursor-pointer"
+                        >
+                          <CircleX className="h-3 w-3" />
+                        </button>
+                      )}
+                    </span>
+                  ))}
+                </div>
+                <Input
+                  ref={inputRef}
+                  value={emailToInput}
+                  aria-label={`Remove ${email}`}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setEmailToInput(value);
+                    if (isGmailEmail(value)) {
+                      setReplyToEmails((prev) => [...prev, value]);
 
-                    setEmailToInput("");
-                  }
-                }}
-                placeholder="Add more people"
-                onKeyDown={(e) => {
-                  console.log("Key: ", e.key);
-                  if (e.key === "Backspace" && emailToInput === "") {
-                    clearHandler(replyToEmails[replyToEmails.length - 1]);
-                  }
-                }}
-                className="h-fit p-0 text-xs border-none ring-0 focus-visible:ring-0 shadow-none w-full"
-              />
+                      setEmailToInput("");
+                    }
+                  }}
+                  placeholder="Add more people"
+                  onKeyDown={(e) => {
+                    console.log("Key: ", e.key);
+                    if (e.key === "Backspace" && emailToInput === "") {
+                      clearHandler(replyToEmails[replyToEmails.length - 1]);
+                    }
+                  }}
+                  className="h-fit p-0 text-xs border-none ring-0 focus-visible:ring-0 shadow-none w-full"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="sm" className="h-6 w-6">
+                <MoveDiagonal className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 hover:bg-red-100"
+                onClick={() => setCollapsed(true)}
+              >
+                <X className="h-4 w-4 text-red-500" />
+              </Button>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" className="h-6 w-6">
-              <MoveDiagonal className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 hover:bg-red-100"
-            >
-              <X className="h-4 w-4 text-red-500" />
-            </Button>
+          <div className="border-b" />
+          <Textarea
+            ref={textareaRef}
+            value={replyMessage}
+            onChange={(e) => setReplyMessage(e.target.value)}
+            placeholder="Hey Kathryn,"
+            className="min-h-[60px] max-h-[200px] resize-none border-0 focus-visible:ring-0 p-0 text-sm shadow-none mx-2 rounded-none"
+          />
+          <div className="flex items-center justify-between pt-1">
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Plus className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Smile className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <ImageIcon className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Link className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <AtSign className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+              <Button className="bg-indigo-600 hover:bg-indigo-500 rounded-full">
+                <Send className="h-4 w-4 mr-2" />
+                Send
+              </Button>
+            </div>
           </div>
         </div>
-        <div className="border-b" />
-        <Textarea
-          ref={textareaRef}
-          value={replyMessage}
-          onChange={(e) => setReplyMessage(e.target.value)}
-          placeholder="Hey Kathryn,"
-          className="min-h-[60px] max-h-[200px] resize-none border-0 focus-visible:ring-0 p-0 text-sm shadow-none mx-2 rounded-none"
-        />
-        <div className="flex items-center justify-between pt-1">
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <Plus className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <Smile className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <ImageIcon className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <Link className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <AtSign className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <Trash2 className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700">
-              <Send className="h-4 w-4 mr-2" />
-              Send
-            </Button>
-          </div>
+      ) : (
+        <div className="p-2 flex flex-row gap-2  items-center">
+          <Button
+            onClick={() => setCollapsed(false)}
+            className="bg-indigo-400 hover:bg-indigo-500 rounded-full"
+          >
+            <Reply className="h-4 w-4 mr-1" />
+            Reply
+          </Button>
+          <Button
+            variant={"outline"}
+            className="rounded-full text-indigo-500 hover:text-indigo-500 hover:bg-indigo-100 border-indigo-400 "
+          >
+            <Forward className="h-4 w-4 mr-1" />
+            Forward
+          </Button>
         </div>
-      </div>
+      )}
     </div>
   );
 }

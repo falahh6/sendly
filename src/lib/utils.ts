@@ -95,3 +95,16 @@ export const groupEmailsByThread = (emails: ParsedEmail[]) => {
     ),
   }));
 };
+
+export const elipsisText = (text: string, maxLength: number) => {
+  if (text.length > maxLength) {
+    return `${text.slice(0, maxLength)}...`;
+  }
+
+  return text;
+};
+
+export const decodeHTML = (html: string) => {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  return doc.documentElement.textContent;
+};
