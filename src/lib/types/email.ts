@@ -31,7 +31,12 @@ export type ParsedEmail = {
   threadId: string;
   plainTextMessage: string | null;
   htmlMessage: string | null;
-  attachments: { filename: string; mimeType: string; data: string | null }[];
+  attachments: {
+    filename: string;
+    data: string | null;
+    mimeType?: string | null;
+    attachmentId?: string | null;
+  }[];
   labelIds: string[];
   priorityGrade: string;
   categorization?: EmailCategorization;

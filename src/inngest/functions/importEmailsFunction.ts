@@ -141,7 +141,10 @@ export const importEmailsFunction = inngest.createFunction(
               format: "full",
             });
 
-            const parsedEmail = parseEmail(emailResponse.data as Email);
+            const parsedEmail = await parseEmail(
+              emailResponse.data as Email,
+              gmail
+            );
 
             const encryptedEmail: ParsedEmail = await evervault.encrypt(
               parsedEmail
@@ -169,8 +172,8 @@ export const importEmailsFunction = inngest.createFunction(
                 attachments: {
                   create: encryptedEmail.attachments.map((attachment) => ({
                     filename: attachment.filename,
-                    mimeType: attachment.mimeType,
-                    data: attachment.data,
+                    mimeType: attachment.mimeType ?? "",
+                    data: attachment.data ?? "",
                   })),
                 },
               },

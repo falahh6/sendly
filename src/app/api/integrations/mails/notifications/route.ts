@@ -114,7 +114,7 @@ export async function POST(request: Request) {
   }
 }
 
-const getOAuthClient = async (integration: Integration) => {
+export const getOAuthClient = async (integration: Integration) => {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CID,
     process.env.GOOGLE_CS
@@ -133,7 +133,10 @@ const fetchEmailDetails = async (gmail: gmail_v1.Gmail, messageId: string) => {
     userId: "me",
     id: messageId,
   });
-  return parseEmail(emailResponse.data as Email);
+
+  console.log("Email Response: ", emailResponse.data);
+
+  return await parseEmail(emailResponse.data as Email, gmail);
 };
 
 const handleNewMessage = async (
@@ -177,7 +180,7 @@ const handleNewMessage = async (
           attachments: {
             create: encryptedEmail.attachments.map((attachment) => ({
               filename: attachment.filename,
-              mimeType: attachment.mimeType,
+              mimeType: attachment.mimeType ?? "",
               data: attachment.data,
             })),
           },

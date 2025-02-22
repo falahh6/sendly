@@ -6,8 +6,12 @@ import {
   lowPriorityWords,
 } from "./data";
 import { Email, ParsedEmail } from "../types/email";
+import { gmail_v1 } from "googleapis";
 
-export function parseEmail(email: Email): ParsedEmail {
+export async function parseEmail(
+  email: Email,
+  gmailInstance: gmail_v1.Gmail
+): Promise<ParsedEmail> {
   const headers = email.payload.headers;
 
   const getHeaderValue = (headerName: string): string | null => {
@@ -42,12 +46,13 @@ export function parseEmail(email: Email): ParsedEmail {
   let htmlMessage: string | null = null;
   const attachments: {
     filename: string;
-    mimeType: string;
     data: string | null;
+    mimeType?: string | null;
+    attachmentId?: string | null;
   }[] = [];
 
   if (email.payload.parts) {
-    for (const part of email.payload.parts) {
+    for (const part of email.payload.parts as gmail_v1.Schema$MessagePart[]) {
       const mimeType = part.mimeType;
       const filename = part.filename ?? "";
 
@@ -58,10 +63,35 @@ export function parseEmail(email: Email): ParsedEmail {
       } else if (mimeType === "text/html" && part.body?.data) {
         htmlMessage = Buffer.from(part.body.data, "base64").toString("utf-8");
       } else if (filename) {
+        // gmailInstance.users.messages.attachments
+        //   .get({
+        //     messageId: email.id,
+        //     id: part.body?.attachmentId as string,
+        //     userId: "me",
+        //   })
+        //   .then((response) => {
+        //     console.log("Attachment Data: ", response.data);
+
+        //     attachments.push({
+        //       filename,
+        //       mimeType: mimeType ?? "",
+        //       data: response.data.data ?? "",
+        //       attachmentId: part.body?.attachmentId,
+        //     });
+        //   });
+
+        const attachmentData =
+          await gmailInstance.users.messages.attachments.get({
+            messageId: email.id,
+            id: part.body?.attachmentId as string,
+            userId: "me",
+          });
+
         attachments.push({
           filename,
-          mimeType,
-          data: part.body?.data ?? null,
+          mimeType: mimeType ?? "",
+          data: attachmentData.data.data ?? "",
+          attachmentId: part.body?.attachmentId,
         });
       }
     }

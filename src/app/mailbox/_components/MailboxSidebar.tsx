@@ -1,7 +1,8 @@
+"use client";
+
 import {
   Mail,
   Star,
-  Clock,
   Send,
   FileEdit,
   Trash2,
@@ -13,6 +14,7 @@ import { Button } from "@/components/ui/button";
 
 import { Labels, NavButton } from "./SidebarButtons";
 import { Integration } from "./Integration";
+import DeleteIntegration from "./DeleteIntegration";
 
 export default function MailBoxSidebar({
   isCollapsed,
@@ -20,6 +22,7 @@ export default function MailBoxSidebar({
   isCollapsed: boolean;
   integrationId: string;
   user: {
+    id: number;
     name: string;
     email: string;
     image?: string;
@@ -58,12 +61,7 @@ export default function MailBoxSidebar({
           badge="8"
           isCollapsed={isCollapsed}
         />
-        <NavButton
-          icon={<Clock className="h-4 w-4" />}
-          label="Snoozed"
-          badge="132"
-          isCollapsed={isCollapsed}
-        />
+
         <NavButton
           icon={<Send className="h-4 w-4" />}
           label="Sent"
@@ -92,6 +90,10 @@ export default function MailBoxSidebar({
             badge="24"
           />
         </div>
+      </div>
+
+      <div className="p-4 w-full h-full flex flex-row items-end">
+        <DeleteIntegration />
       </div>
     </div>
   );

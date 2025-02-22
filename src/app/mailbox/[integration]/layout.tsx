@@ -100,6 +100,7 @@ const MailboxLayout = async ({
           isCollapsed={false}
           integrationId={params.integration}
           user={{
+            id: session?.user.id ?? 0,
             name: session?.user.name ?? "",
             email: session?.user.email ?? "",
             image: session?.user.image ?? "",

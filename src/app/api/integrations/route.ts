@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { google } from "googleapis";
+import { getOAuthClient } from "./mails/notifications/route";
 
 export const dynamic = "force-dynamic";
 
@@ -71,11 +73,20 @@ export const DELETE = async (req: NextRequest) => {
       );
     }
 
-    await prisma.integration.delete({
+    const response = await prisma.integration.delete({
       where: {
         id: Number(integrationId),
       },
     });
+
+    const oauth2Client = getOAuthClient(response);
+    const gmail = google.gmail({ version: "v1", auth: await oauth2Client });
+
+    const watchResponse = await gmail.users.stop({
+      userId: "me",
+    });
+
+    console.log("Watch response: ", watchResponse);
 
     return NextResponse.json(
       { message: `Integration and mails deleted` },

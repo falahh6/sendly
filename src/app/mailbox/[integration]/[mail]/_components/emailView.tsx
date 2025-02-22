@@ -32,6 +32,7 @@ import {
   nameStrParse,
   isGmailEmail,
   decodeHTML,
+  elipsisText,
 } from "@/lib/utils";
 import DOMPurify from "dompurify";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -159,8 +160,9 @@ export const EmailView = ({ emailTheadId }: { emailTheadId: string }) => {
                 <EmailBody email={email} />
               )}
             {index === mail.length - 1 && <EmailBody email={email} />}{" "}
-            {/* Always show last email body */}
-            {email.attachments.length > 0 && <AttachmentsSection />}
+            {email.attachments.length > 0 && (
+              <AttachmentsSection attachments={email.attachments} />
+            )}
           </div>
         ))}
       </ScrollArea>
@@ -225,52 +227,47 @@ function EmailHeader({
 
 function EmailBody({ email }: { email: ParsedEmail }) {
   return (
-    <>
-      <div className="p-4 mt-0">
-        <div className="space-y-4 h-full text-sm leading-relaxed text-zinc-700">
-          {email.htmlMessage ? (
-            <div
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(email?.htmlMessage || ""),
-              }}
-              className="prose prose-sm max-w-none overflow-auto"
-            />
-          ) : (
-            <p className="whitespace-pre-line">
-              {decodeHTML(email?.plainTextMessage ?? email?.snippet)}
-            </p>
-          )}
-        </div>
+    <div className="p-4 mt-0">
+      <div className="space-y-4 h-full text-sm text-zinc-700 overflow-auto">
+        {email.htmlMessage ? (
+          <div
+            dangerouslySetInnerHTML={{
+              __html: DOMPurify.sanitize(email?.htmlMessage || ""),
+            }}
+            className="prose prose-sm overflow-auto"
+          />
+        ) : (
+          <p className="whitespace-pre-line ">
+            {decodeHTML(email?.plainTextMessage ?? email?.snippet)}
+          </p>
+        )}
       </div>
-    </>
+    </div>
   );
 }
 
 function AttachmentsSection({
   attachments = [],
 }: {
-  attachments?: {
-    filename: string;
-    mimeType: string;
-    data: string | null;
-  }[];
+  attachments?: ParsedEmail["attachments"];
 }) {
   return (
     <div className="p-3">
       <h3 className="text-sm font-semibold flex items-center gap-2">
-        Attachments{" "}
-        <span className="text-zinc-500">
-          ({attachments.length} {attachments.length > 1 ? "files" : "file"})
-        </span>
+        {attachments.length}{" "}
+        {attachments.length > 1 ? "Attachments" : "Attachment"}
       </h3>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
         {attachments.map((attachment, i) => (
           <div key={attachment.filename + i} className="group relative">
             <div className="aspect-[4/3] rounded-lg overflow-hidden border border-zinc-200"></div>
             <div className="mt-2">
               <div className="flex items-center gap-1">
-                <span className="text-sm font-medium">
-                  {attachment.filename}
+                <span className="text-xs font-semibold">
+                  {elipsisText(
+                    attachment.filename.replace(/\.[^/.]+$/, ""),
+                    12
+                  )}
                 </span>
               </div>
               <p className="text-xs text-zinc-500">{attachment.mimeType}</p>
