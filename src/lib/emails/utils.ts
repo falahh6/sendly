@@ -6,10 +6,12 @@ import {
   lowPriorityWords,
 } from "./data";
 import { ParsedEmail } from "../types/email";
-import { gmail_v1 } from "googleapis";
+import { gmail_v1, google } from "googleapis";
 import { UTApi } from "uploadthing/server";
 
 import { AddressObject, ParsedMail, simpleParser } from "mailparser";
+import { evervault } from "../evervault";
+import { Integration } from "@prisma/client";
 
 const utapi = new UTApi();
 
@@ -207,3 +209,17 @@ export function gradeEmail({
 
   return grade;
 }
+
+export const getOAuthClient = async (integration: Integration) => {
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CID,
+    process.env.GOOGLE_CS
+  );
+
+  oauth2Client.setCredentials({
+    access_token: await evervault.decrypt(integration.accessToken),
+    refresh_token: await evervault.decrypt(integration.refreshToken),
+  });
+
+  return oauth2Client;
+};

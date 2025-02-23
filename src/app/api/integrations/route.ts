@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { google } from "googleapis";
-import { getOAuthClient } from "./mails/notifications/route";
+import { getOAuthClient } from "@/lib/emails/utils";
 
 export const dynamic = "force-dynamic";
 

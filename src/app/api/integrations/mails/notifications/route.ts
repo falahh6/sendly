@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { gmail_v1, google } from "googleapis";
-import { parseEmail } from "@/lib/emails/utils";
+import { getOAuthClient, parseEmail } from "@/lib/emails/utils";
 import { Email, ParsedEmail } from "@/lib/types/email";
 import prisma from "@/lib/prisma";
-import { Integration } from "@prisma/client";
 import { evervault } from "@/lib/evervault";
 import { ablyServer } from "@/lib/ably";
 import { Channel } from "ably";
@@ -109,20 +108,6 @@ export async function POST(request: Request) {
     );
   }
 }
-
-export const getOAuthClient = async (integration: Integration) => {
-  const oauth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CID,
-    process.env.GOOGLE_CS
-  );
-
-  oauth2Client.setCredentials({
-    access_token: await evervault.decrypt(integration.accessToken),
-    refresh_token: await evervault.decrypt(integration.refreshToken),
-  });
-
-  return oauth2Client;
-};
 
 const fetchEmailDetails = async (gmail: gmail_v1.Gmail, messageId: string) => {
   const emailResponse = await gmail.users.messages.get({
