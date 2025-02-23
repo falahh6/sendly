@@ -40,6 +40,7 @@ import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import Image from "next/image";
 
 export const EmailView = ({ emailTheadId }: { emailTheadId: string }) => {
   const { integrations, currentIntegration } = useIntegrations();
@@ -234,7 +235,7 @@ function EmailBody({ email }: { email: ParsedEmail }) {
             dangerouslySetInnerHTML={{
               __html: DOMPurify.sanitize(email?.htmlMessage || ""),
             }}
-            className="prose prose-sm overflow-auto"
+            className="prose prose-sm overflow-auto space-y-2"
           />
         ) : (
           <p className="whitespace-pre-line ">
@@ -258,22 +259,67 @@ function AttachmentsSection({
         {attachments.length > 1 ? "Attachments" : "Attachment"}
       </h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-        {attachments.map((attachment, i) => (
-          <div key={attachment.filename + i} className="group relative">
-            <div className="aspect-[4/3] rounded-lg overflow-hidden border border-zinc-200"></div>
-            <div className="mt-2">
-              <div className="flex items-center gap-1">
-                <span className="text-xs font-semibold">
-                  {elipsisText(
-                    attachment.filename.replace(/\.[^/.]+$/, ""),
-                    12
-                  )}
-                </span>
+        {attachments.map((attachment, i) => {
+          if (!attachment.data) return null;
+
+          const blobUrl = attachment.data;
+
+          const getFileCategory = (mimeType: string) => {
+            if (mimeType.startsWith("image/")) return "Image";
+            if (mimeType.startsWith("video/")) return "Video";
+            if (mimeType === "application/pdf") return "PDF";
+            if (mimeType.startsWith("text/")) return "Text";
+            if (mimeType.includes("spreadsheet") || mimeType.includes("excel"))
+              return "Spreadsheet";
+            if (mimeType.includes("word") || mimeType.includes("document"))
+              return "Document";
+            return "File";
+          };
+
+          const fileCategory = getFileCategory(attachment.mimeType ?? "");
+
+          return (
+            <div key={attachment.filename + i} className="group relative">
+              <div className="aspect-[4/3] rounded-lg overflow-hidden border border-zinc-200 flex items-center justify-center bg-gray-100">
+                {attachment.mimeType?.startsWith("image/") ? (
+                  <Image
+                    src={blobUrl}
+                    alt={attachment.filename}
+                    className="w-full h-full object-cover"
+                    width={100}
+                    height={100}
+                    unoptimized
+                    onError={(e) => console.error("Image failed to load:", e)}
+                  />
+                ) : attachment.mimeType?.startsWith("video/") ? (
+                  <video
+                    src={blobUrl}
+                    controls
+                    className="w-full h-full object-cover"
+                  />
+                ) : attachment.mimeType === "application/pdf" ? (
+                  <iframe src={blobUrl} className="w-full h-full" />
+                ) : (
+                  <div className="flex flex-col items-center text-gray-500 text-sm">
+                    <span className="text-lg">📄</span>
+                    <span>{fileCategory}</span>
+                  </div>
+                )}
               </div>
-              <p className="text-xs text-zinc-500">{attachment.mimeType}</p>
+              <div className="mt-2">
+                <div className="flex items-center gap-1">
+                  <span className="text-xs font-semibold">
+                    {elipsisText(
+                      attachment.filename.replace(/\.[^/.]+$/, ""),
+                      12
+                    )}
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-500">{fileCategory}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -16,12 +16,18 @@ import { Label } from "@/components/ui/label";
 import { useIntegrations } from "@/context/mailbox";
 import { CircleAlertIcon, Loader } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const DeleteIntegration = () => {
-  const { currentIntegration, setIntegrations, setCurrentIntegration } =
-    useIntegrations();
+  const router = useRouter();
+
+  const {
+    currentIntegration,
+    setIntegrations,
+    setCurrentIntegration,
+    integrations,
+  } = useIntegrations();
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const { data } = useSession();
@@ -47,20 +53,21 @@ const DeleteIntegration = () => {
       if (!response.ok) {
         throw new Error("Failed to delete integration");
       } else {
-        setIntegrations((prev) => {
-          const prevState = prev;
-          const filteredIntegrations = prevState.filter(
-            (integration) => integration.id !== currentIntegration.id
-          );
-          if (filteredIntegrations.length > 0) {
-            setCurrentIntegration(filteredIntegrations[0]);
-            return filteredIntegrations;
-          } else {
-            setCurrentIntegration(undefined);
-            redirect("/mailbox?m=add-new");
-            return [];
-          }
-        });
+        const filteredIntegrations = integrations.filter(
+          (integration) => integration.id !== currentIntegration.id
+        );
+
+        console.log("filteredIntegrations : ", filteredIntegrations);
+
+        setIntegrations(filteredIntegrations);
+
+        if (filteredIntegrations.length > 0) {
+          setCurrentIntegration(filteredIntegrations[0]);
+          router.push(`/mailbox/${filteredIntegrations[0].id}`);
+        } else {
+          setCurrentIntegration(undefined);
+          router.push("/mailbox?m=add-new");
+        }
       }
     } catch (error) {
       console.error(error);

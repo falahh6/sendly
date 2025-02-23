@@ -92,6 +92,16 @@ export default function MailBoxSidebar({
         </div>
       </div>
 
+      {/* <Button
+        onClick={async () => {
+          const response = await fetch("/api/test");
+          console.log(await response.json());
+        }}
+        className="mx-4"
+      >
+        Test call
+      </Button> */}
+
       <div className="p-4 w-full h-full flex flex-row items-end">
         <DeleteIntegration />
       </div>

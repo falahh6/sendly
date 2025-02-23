@@ -138,13 +138,10 @@ export const importEmailsFunction = inngest.createFunction(
             const emailResponse = await gmail.users.messages.get({
               userId: "me",
               id: message.id as string,
-              format: "full",
+              format: "RAW",
             });
 
-            const parsedEmail = await parseEmail(
-              emailResponse.data as Email,
-              gmail
-            );
+            const parsedEmail = await parseEmail(emailResponse.data as Email);
 
             const encryptedEmail: ParsedEmail = await evervault.encrypt(
               parsedEmail

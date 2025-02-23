@@ -41,3 +41,6 @@ next-env.d.ts
 
 #help
 llm.ts
+
+#test file
+src/app/api/test/

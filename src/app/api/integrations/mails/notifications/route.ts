@@ -16,8 +16,6 @@ export async function POST(request: Request) {
     Buffer.from(body.message.data, "base64").toString("utf-8")
   );
 
-  console.log("Decoded Data: ", decodedData);
-
   try {
     if (!decodedData.emailAddress || !decodedData.historyId) {
       return NextResponse.json(
@@ -53,8 +51,6 @@ export async function POST(request: Request) {
     });
 
     const historyRecords = historyData.data.history || [];
-
-    console.log("History Records: ", historyRecords);
 
     const channel = ablyServer.channels.get(`gmail-channel-${integration.id}`);
 
@@ -132,11 +128,10 @@ const fetchEmailDetails = async (gmail: gmail_v1.Gmail, messageId: string) => {
   const emailResponse = await gmail.users.messages.get({
     userId: "me",
     id: messageId,
+    format: "RAW",
   });
 
-  console.log("Email Response: ", emailResponse.data);
-
-  return await parseEmail(emailResponse.data as Email, gmail);
+  return await parseEmail(emailResponse.data as Email);
 };
 
 const handleNewMessage = async (
@@ -154,11 +149,9 @@ const handleNewMessage = async (
 
   if (existingEmail === null) {
     const parsedEmail = await fetchEmailDetails(gmail, messageId);
-    console.log("Parsed Email: ", parsedEmail);
 
     try {
       const encryptedEmail: ParsedEmail = await evervault.encrypt(parsedEmail);
-      console.log("Encrypted Email: ", encryptedEmail);
 
       await prisma.mail.create({
         data: {
@@ -220,6 +213,7 @@ const handleLabelChange = async (
   const emailResponse = await gmail.users.messages.get({
     userId: "me",
     id: messageId,
+    format: "RAW",
   });
 
   const updatedLabels = emailResponse.data.labelIds || [];

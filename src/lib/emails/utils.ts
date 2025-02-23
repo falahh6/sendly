@@ -5,127 +5,89 @@ import {
   highPriorityWords,
   lowPriorityWords,
 } from "./data";
-import { Email, ParsedEmail } from "../types/email";
+import { ParsedEmail } from "../types/email";
 import { gmail_v1 } from "googleapis";
+import { UTApi } from "uploadthing/server";
+
+import { AddressObject, ParsedMail, simpleParser } from "mailparser";
+
+const utapi = new UTApi();
+
+async function uploadToUploadThing(
+  filename: string,
+  base64Data: string,
+  mimeType: string
+) {
+  const buffer = Buffer.from(base64Data, "base64");
+  const response = await utapi.uploadFiles([
+    new File([buffer], filename, { type: mimeType }),
+  ]);
+
+  return response[0].data?.ufsUrl || "";
+}
+
+const extractEmails = (
+  addresses: AddressObject | AddressObject[] | null | undefined
+): string[] => {
+  if (!addresses) return [];
+  if (Array.isArray(addresses)) {
+    return addresses.map((addr) => addr.text || "").filter(Boolean);
+  }
+  return [addresses.text || ""].filter(Boolean);
+};
 
 export async function parseEmail(
-  email: Email,
-  gmailInstance: gmail_v1.Gmail
+  email: gmail_v1.Schema$Message
 ): Promise<ParsedEmail> {
-  const headers = email.payload.headers;
-
-  const getHeaderValue = (headerName: string): string | null => {
-    return (
-      headers.find(
-        (header) => header.name.toLowerCase() === headerName.toLowerCase()
-      )?.value ?? null
-    );
-  };
-
-  const parseRecipients = (headerValue: string | null): string[] => {
-    return headerValue
-      ? headerValue.split(",").map((address) => address.trim())
-      : [];
-  };
-
-  const from = getHeaderValue("From") ?? "";
-  const to = parseRecipients(getHeaderValue("To"));
-  const cc = parseRecipients(getHeaderValue("Cc"));
-  const bcc = parseRecipients(getHeaderValue("Bcc"));
-  const date = getHeaderValue("Date");
-  const subject = getHeaderValue("Subject") ?? "";
-  const messageId = getHeaderValue("Message-ID");
-  const replyTo = getHeaderValue("Reply-To");
-
-  const snippet = email.snippet || "";
-  const threadId = email.threadId || "";
-
-  const labelIds = email.labelIds || [];
-
-  let plainTextMessage: string | null = null;
-  let htmlMessage: string | null = null;
-  const attachments: {
-    filename: string;
-    data: string | null;
-    mimeType?: string | null;
-    attachmentId?: string | null;
-  }[] = [];
-
-  if (email.payload.parts) {
-    for (const part of email.payload.parts as gmail_v1.Schema$MessagePart[]) {
-      const mimeType = part.mimeType;
-      const filename = part.filename ?? "";
-
-      if (mimeType === "text/plain" && part.body?.data) {
-        plainTextMessage = Buffer.from(part.body.data, "base64").toString(
-          "utf-8"
-        );
-      } else if (mimeType === "text/html" && part.body?.data) {
-        htmlMessage = Buffer.from(part.body.data, "base64").toString("utf-8");
-      } else if (filename) {
-        // gmailInstance.users.messages.attachments
-        //   .get({
-        //     messageId: email.id,
-        //     id: part.body?.attachmentId as string,
-        //     userId: "me",
-        //   })
-        //   .then((response) => {
-        //     console.log("Attachment Data: ", response.data);
-
-        //     attachments.push({
-        //       filename,
-        //       mimeType: mimeType ?? "",
-        //       data: response.data.data ?? "",
-        //       attachmentId: part.body?.attachmentId,
-        //     });
-        //   });
-
-        const attachmentData =
-          await gmailInstance.users.messages.attachments.get({
-            messageId: email.id,
-            id: part.body?.attachmentId as string,
-            userId: "me",
-          });
-
-        attachments.push({
-          filename,
-          mimeType: mimeType ?? "",
-          data: attachmentData.data.data ?? "",
-          attachmentId: part.body?.attachmentId,
-        });
-      }
-    }
+  if (!email.raw) {
+    throw new Error("Email raw data is missing.");
   }
 
-  const priorityGrade = gradeEmail({
-    subject,
-    snippet,
-    labelIds,
-    from,
-    date,
-  });
+  const decodedEmail = Buffer.from(email.raw, "base64").toString("utf-8");
+
+  const parsedEmail: ParsedMail = await simpleParser(decodedEmail);
 
   return {
-    id: email.id,
-    from,
-    to,
-    cc,
-    bcc,
-    date,
-    subject,
-    messageId,
-    replyTo,
-    snippet,
-    threadId,
-    plainTextMessage,
-    htmlMessage,
-    attachments,
-    labelIds,
-    priorityGrade,
+    id: email.id || "",
+    from: parsedEmail.from?.text || "",
+    to: extractEmails(parsedEmail.to),
+    cc: extractEmails(parsedEmail.cc),
+    bcc: extractEmails(parsedEmail.bcc),
+    date: parsedEmail.date?.toISOString() || null,
+    subject: parsedEmail.subject || "",
+    messageId: parsedEmail.messageId || null,
+    replyTo: parsedEmail.replyTo?.text || null,
+    snippet: email.snippet || "",
+    threadId: email.threadId || "",
+    plainTextMessage: parsedEmail.text || null,
+    htmlMessage: parsedEmail.html || null,
+    attachments: await Promise.all(
+      parsedEmail.attachments.map(async (attachment) => {
+        const fileUrl = await uploadToUploadThing(
+          attachment.filename || "unknown",
+          attachment.content.toString("base64"),
+          attachment.contentType || ""
+        );
+
+        return {
+          filename: attachment.filename || "unknown",
+          data: fileUrl,
+          mimeType: attachment.contentType || null,
+          attachmentId: attachment.cid || null,
+        };
+      })
+    ),
+    labelIds: email.labelIds || [],
+    priorityGrade: "normal",
+    categorization: undefined,
+    nlpEntities: [],
+    sentimentScore: 0,
+    privacyCompliant: true,
+    category: "general",
   };
 }
 
-function gradeEmail({
+export function gradeEmail({
   subject,
   snippet,
   labelIds,
